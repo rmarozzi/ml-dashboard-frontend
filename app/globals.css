@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --font-syne: 'Syne', sans-serif;
+  --font-dm-sans: 'DM Sans', sans-serif;
+  --font-dm-mono: 'DM Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #07070d;
+  color: #f0f0f8;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a38;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a50;
+}
+
+/* Badge variants */
+.badge-paid    { @apply bg-brand/10 text-brand border border-brand/30; }
+.badge-shipped { @apply bg-blue-500/10 text-blue-400 border border-blue-500/30; }
+.badge-cancelled { @apply bg-red-500/10 text-red-400 border border-red-500/30; }
+.badge-pending { @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/30; }
+
+/* Card glow on hover */
+.card-glow {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card-glow:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.06);
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #18181f 25%, #1e1e28 50%, #18181f 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.35s ease both;
+}

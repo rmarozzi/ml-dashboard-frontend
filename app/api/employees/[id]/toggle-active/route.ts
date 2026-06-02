@@ -1,0 +1,4 @@
+import { NextRequest } from "next/server";
+import { backendFetch } from "@/lib/backendFetch";
+
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) { return backendFetch(req, `/employees/${params.id}/toggle-active`); }
