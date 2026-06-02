@@ -3,26 +3,24 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionToken = request.cookies.get("session_token")?.value;
 
-  // Libera tudo que não é página
+  // Libera completamente
   if (
-    pathname.startsWith("/api/") ||
-    pathname.startsWith("/_next/") ||
-    pathname.includes(".")
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.includes(".") ||
+    pathname === "/favicon.ico"
   ) {
     return NextResponse.next();
   }
 
+  const sessionToken = request.cookies.get("session_token")?.value;
   const isLoginPage = pathname === "/login";
-  const isAdminPage = pathname.startsWith("/admin");
 
-  // Sem sessão e não está no login → vai para login
   if (!sessionToken && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Tem sessão e está no login → vai para dashboard
   if (sessionToken && isLoginPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -31,7 +29,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
