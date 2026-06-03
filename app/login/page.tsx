@@ -21,20 +21,25 @@ useEffect(() => {
   }
 }, [user, loading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    if (!email || !password) { setError("Preencha e-mail e senha"); return; }
-    setSubmitting(true);
-    try {
-      await authApi.login(email, password);
-      router.replace("/dashboard");
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? "E-mail ou senha incorretos");
-    } finally {
-      setSubmitting(false);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  if (!email || !password) { setError("Preencha e-mail e senha"); return; }
+  setSubmitting(true);
+  try {
+    const { data } = await authApi.login(email, password);
+    const role = data?.user?.role;
+    if (role === "admin") {
+      window.location.href = "/admin";
+    } else {
+      window.location.href = "/dashboard";
     }
-  };
+  } catch (err: any) {
+    setError(err?.response?.data?.message ?? "E-mail ou senha incorretos");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
