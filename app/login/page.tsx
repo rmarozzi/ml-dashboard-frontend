@@ -29,6 +29,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   try {
     const { data } = await authApi.login(email, password);
     const role = data?.user?.role;
+    // Não chama setSubmitting(false) — deixa o spinner até o redirect
     if (role === "admin") {
       window.location.href = "/admin";
     } else {
@@ -36,7 +37,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
   } catch (err: any) {
     setError(err?.response?.data?.message ?? "E-mail ou senha incorretos");
-  } finally {
     setSubmitting(false);
   }
 };

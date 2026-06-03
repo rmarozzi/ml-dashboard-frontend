@@ -27,6 +27,7 @@ export async function backendFetch(
         Cookie: cookie,
       },
       body,
+      cache: "no-store",
     });
   } catch (err) {
     console.error("[backendFetch] Failed to reach backend:", url, err);
@@ -36,17 +37,6 @@ export async function backendFetch(
     );
   }
 
-  const responseHeaders = new Headers();
-
-  // Forward ALL set-cookie headers
-  res.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") {
-      responseHeaders.append("set-cookie", value);
-    }
-  });
-
-  responseHeaders.set("content-type", "application/json");
-
   let data: unknown;
   try {
     data = await res.json();
@@ -54,8 +44,13 @@ export async function backendFetch(
     data = {};
   }
 
-  return NextResponse.json(data, {
-    status: res.status,
-    headers: responseHeaders,
-  });
+  const response = NextResponse.json(data, { status: res.status });
+
+  // Copia todos os set-cookie um por um
+  const setCookieHeader = res.headers.get("set-cookie");
+  if (setCookieHeader) {
+    response.headers.set("set-cookie", setCookieHeader);
+  }
+
+  return response;
 }
