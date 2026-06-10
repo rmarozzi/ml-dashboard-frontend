@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Download, ChevronRight, AlertTriangle, X } from "lucide-react";
+import { Search, Download, ChevronRight, AlertTriangle, X, TrendingUp, TrendingDown } from "lucide-react";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ordersApi, exportApi } from "@/lib/api";
@@ -12,6 +12,9 @@ import { formatCurrency, formatDateTime, downloadBlob } from "@/lib/utils";
 import { Order } from "@/lib/types";
 
 const STATUSES = ["paid", "pending", "shipped", "cancelled"];
+const STATUS_LABELS: Record<string, string> = {
+  paid: "Pago", pending: "Pendente", shipped: "Enviado", cancelled: "Cancelado"
+};
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -53,24 +56,41 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {canViewProfit && (
+      {/* Alerta custo não cadastrado */}
+      {canViewProfit && orders.some((o) => !(o as any).allCostsFound) && (
         <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-2.5">
           <AlertTriangle size={14} className="text-yellow-400 flex-shrink-0" />
-          <p className="text-xs text-yellow-400">Alguns pedidos com custo não cadastrado — margens podem estar imprecisas</p>
+          <p className="text-xs text-yellow-400">
+            Alguns pedidos com custo de produto não cadastrado — lucro pode estar impreciso
+          </p>
         </div>
       )}
 
+      {/* Toolbar */}
       <div className="flex gap-2 flex-wrap">
         <div className="flex-1 min-w-[200px] relative">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por ID ou produto..."
-            className="w-full bg-bg-3 border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder:text-dim outline-none focus:border-brand/50" />
-          {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-dim hover:text-white"><X size={13} /></button>}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por ID ou produto..."
+            className="w-full bg-bg-3 border border-border rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder:text-dim outline-none focus:border-brand/50"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-dim hover:text-white">
+              <X size={13} />
+            </button>
+          )}
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-bg-3 border border-border rounded-lg px-3 py-2 text-sm text-muted outline-none cursor-pointer">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-bg-3 border border-border rounded-lg px-3 py-2 text-sm text-muted outline-none cursor-pointer"
+        >
           <option value="">Todos os status</option>
-          {STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+          ))}
         </select>
         {canExport && (
           <Button variant="secondary" size="sm" loading={exporting} onClick={handleExport}>
@@ -79,69 +99,239 @@ export default function OrdersPage() {
         )}
       </div>
 
+      {/* Tabela */}
       <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-border bg-bg-4">
-                {["ID", "Produto", "Conta ML", "Valor", canViewProfit && "Lucro", canViewProfit && "Margem", "Data", "Status", ""]
-                  .filter(Boolean).map((h) => (
-                  <th key={String(h)} className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">{h}</th>
+                {[
+                  "ID", "Produto", "Conta ML", "Receita",
+                  canViewProfit && "Tarifa ML",
+                  canViewProfit && "Frete",
+                  canViewProfit && "Lucro",
+                  canViewProfit && "Margem",
+                  "Data", "Status", ""
+                ].filter(Boolean).map((h) => (
+                  <th key={String(h)} className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {loading ? Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i} className="border-b border-border/20">
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="skeleton h-4 rounded" /></td>
-                  ))}
-                </tr>
-              )) : orders.map((order) => (
-                <>
-                  <tr key={order.id} className="border-b border-border/20 hover:bg-bg-4 transition-colors cursor-pointer"
-                    onClick={() => setExpanded(expanded === order.id ? null : order.id)}>
-                    <td className="px-4 py-3 font-mono text-xs text-muted">{order.mlId}</td>
-                    <td className="px-4 py-3 text-sm text-white max-w-[180px] truncate">{order.items?.[0]?.title ?? "—"}</td>
-                    <td className="px-4 py-3 text-xs text-muted">{order.token?.apelido ?? order.token?.mlNickname ?? "—"}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-white">{formatCurrency(order.totalAmount)}</td>
-                    {canViewProfit && (
-                      <td className={`px-4 py-3 font-mono text-sm ${(order.profit ?? 0) >= 0 ? "text-brand" : "text-red-400"}`}>
-                        {order.profit != null ? formatCurrency(order.profit) : <span className="text-dim">—</span>}
-                      </td>
-                    )}
-                    {canViewProfit && (
-                      <td className={`px-4 py-3 font-mono text-sm ${(order.margin ?? 0) >= 0 ? "text-brand" : "text-red-400"}`}>
-                        {order.margin != null ? `${order.margin.toFixed(1)}%` : <span className="text-dim">—</span>}
-                      </td>
-                    )}
-                    <td className="px-4 py-3 text-xs text-dim">{formatDateTime(order.dateCreated)}</td>
-                    <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
-                    <td className="px-4 py-3"><ChevronRight size={14} className={`text-dim transition-transform ${expanded === order.id ? "rotate-90" : ""}`} /></td>
-                  </tr>
-                  {expanded === order.id && canViewProfit && (
-                    <tr key={`exp-${order.id}`} className="bg-bg-4 border-b border-border/20">
-                      <td colSpan={9} className="px-6 py-4">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          {[
-                            ["Receita Bruta", formatCurrency(order.totalAmount), "text-white"],
-                            ["Taxa ML (~14%)", formatCurrency(order.totalAmount * 0.14), "text-red-400"],
-                            ["Custo Produto", "Verificar custo", "text-yellow-400"],
-                            ["Lucro Líquido", order.profit != null ? formatCurrency(order.profit) : "—", (order.profit ?? 0) >= 0 ? "text-brand" : "text-red-400"],
-                          ].map(([label, value, color]) => (
-                            <div key={String(label)}>
-                              <p className="text-[10px] text-dim uppercase tracking-widest mb-1">{label}</p>
-                              <p className={`text-base font-bold font-mono ${color}`}>{value}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
+              {loading
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <tr key={i} className="border-b border-border/20">
+                      {Array.from({ length: 9 }).map((_, j) => (
+                        <td key={j} className="px-4 py-3"><div className="skeleton h-4 rounded" /></td>
+                      ))}
                     </tr>
-                  )}
-                </>
-              ))}
+                  ))
+                : orders.map((order) => {
+                    const o = order as any;
+                    const isExpanded = expanded === order.id;
+                    const profitPositive = (o.profit ?? 0) >= 0;
+
+                    return (
+                      <>
+                        <tr
+                          key={order.id}
+                          className="border-b border-border/20 hover:bg-bg-4 transition-colors cursor-pointer"
+                          onClick={() => setExpanded(isExpanded ? null : order.id)}
+                        >
+                          <td className="px-4 py-3 font-mono text-xs text-muted whitespace-nowrap">{order.mlId}</td>
+                          <td className="px-4 py-3 text-sm text-white max-w-[180px] truncate">
+                            {order.items?.[0]?.title ?? "—"}
+                            {order.items && order.items.length > 1 && (
+                              <span className="ml-1 text-xs text-dim">+{order.items.length - 1}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted whitespace-nowrap">
+                            {order.token?.apelido ?? order.token?.mlNickname ?? "—"}
+                          </td>
+                          <td className="px-4 py-3 font-mono text-sm text-white whitespace-nowrap">
+                            {formatCurrency(order.totalAmount)}
+                          </td>
+                          {canViewProfit && (
+                            <td className="px-4 py-3 font-mono text-sm text-red-400 whitespace-nowrap">
+                              {o.mlFee != null ? `-${formatCurrency(o.mlFee)}` : <span className="text-dim">—</span>}
+                            </td>
+                          )}
+                          {canViewProfit && (
+                            <td className="px-4 py-3 font-mono text-sm text-red-400 whitespace-nowrap">
+                              {o.shippingCost != null && o.shippingCost > 0
+                                ? `-${formatCurrency(o.shippingCost)}`
+                                : <span className="text-dim">—</span>}
+                            </td>
+                          )}
+                          {canViewProfit && (
+                            <td className={`px-4 py-3 font-mono text-sm whitespace-nowrap ${profitPositive ? "text-brand" : "text-red-400"}`}>
+                              {o.profit != null
+                                ? <span className="flex items-center gap-1">
+                                    {profitPositive
+                                      ? <TrendingUp size={12} />
+                                      : <TrendingDown size={12} />}
+                                    {formatCurrency(o.profit)}
+                                  </span>
+                                : <span className="text-dim">—</span>}
+                            </td>
+                          )}
+                          {canViewProfit && (
+                            <td className={`px-4 py-3 font-mono text-sm whitespace-nowrap ${profitPositive ? "text-brand" : "text-red-400"}`}>
+                              {o.margin != null ? `${o.margin.toFixed(1)}%` : <span className="text-dim">—</span>}
+                            </td>
+                          )}
+                          <td className="px-4 py-3 text-xs text-dim whitespace-nowrap">
+                            {formatDateTime(order.dateCreated)}
+                          </td>
+                          <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
+                          <td className="px-4 py-3">
+                            <ChevronRight
+                              size={14}
+                              className={`text-dim transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                            />
+                          </td>
+                        </tr>
+
+                        {/* Breakdown expandido */}
+                        {isExpanded && canViewProfit && (
+                          <tr key={`exp-${order.id}`} className="border-b border-border/20">
+                            <td colSpan={11} className="p-0">
+                              <div className="bg-bg-4 border-t border-border/30 px-6 py-5">
+                                <p className="text-[10px] font-semibold text-dim uppercase tracking-widest mb-4">
+                                  Detalhamento Financeiro
+                                </p>
+
+                                <div className="flex flex-col gap-2 max-w-md">
+                                  {/* Receita Bruta */}
+                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                    <span className="text-sm text-muted">Receita Bruta</span>
+                                    <span className="font-mono text-sm font-bold text-white">
+                                      {formatCurrency(order.totalAmount)}
+                                    </span>
+                                  </div>
+
+                                  {/* Tarifa ML */}
+                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                    <span className="text-sm text-muted">Tarifa Mercado Livre</span>
+                                    <span className="font-mono text-sm text-red-400">
+                                      {o.mlFee != null ? `-${formatCurrency(o.mlFee)}` : "—"}
+                                    </span>
+                                  </div>
+
+                                  {/* Frete */}
+                                  {o.shippingCost != null && o.shippingCost > 0 && (
+                                    <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                      <span className="text-sm text-muted">Frete (cobrado do vendedor)</span>
+                                      <span className="font-mono text-sm text-red-400">
+                                        -{formatCurrency(o.shippingCost)}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Imposto NF */}
+                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                    <span className="text-sm text-muted">
+                                      Imposto NF
+                                      {!o.allCostsFound && (
+                                        <span className="ml-2 text-[10px] text-yellow-400">(custo não cadastrado)</span>
+                                      )}
+                                    </span>
+                                    <span className={`font-mono text-sm ${o.nfTax > 0 ? "text-red-400" : "text-dim"}`}>
+                                      {o.nfTax != null && o.nfTax > 0
+                                        ? `-${formatCurrency(o.nfTax)}`
+                                        : "—"}
+                                    </span>
+                                  </div>
+
+                                  {/* Custo do Produto */}
+                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                    <span className="text-sm text-muted">Custo do Produto</span>
+                                    <span className={`font-mono text-sm ${o.productCost > 0 ? "text-red-400" : "text-yellow-400"}`}>
+                                      {o.productCost != null && o.productCost > 0
+                                        ? `-${formatCurrency(o.productCost)}`
+                                        : <span className="text-yellow-400">Verificar custo</span>}
+                                    </span>
+                                  </div>
+
+                                  {/* Imposto ML — só aparece se > 0 */}
+                                  {o.mlTax != null && o.mlTax > 0 && (
+                                    <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                      <span className="text-sm text-muted">Imposto ML</span>
+                                      <span className="font-mono text-sm text-red-400">
+                                        -{formatCurrency(o.mlTax)}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Estorno — só aparece se > 0 */}
+                                  {o.estorno != null && o.estorno > 0 && (
+                                    <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                      <span className="text-sm text-muted">Estorno / Bônus ML</span>
+                                      <span className="font-mono text-sm text-brand">
+                                        +{formatCurrency(o.estorno)}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Lucro Líquido */}
+                                  <div className="flex justify-between items-center py-2 mt-1 rounded-lg bg-bg-5 px-3">
+                                    <span className="text-sm font-bold text-white">Lucro Líquido</span>
+                                    <span className={`font-mono text-base font-bold ${profitPositive ? "text-brand" : "text-red-400"}`}>
+                                      {o.profit != null ? formatCurrency(o.profit) : "—"}
+                                    </span>
+                                  </div>
+
+                                  {/* Margem */}
+                                  {o.margin != null && (
+                                    <div className="flex justify-end">
+                                      <span className={`text-xs font-mono ${profitPositive ? "text-brand" : "text-red-400"}`}>
+                                        Margem: {o.margin.toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Itens do pedido */}
+                                {order.items && order.items.length > 0 && (
+                                  <div className="mt-5 pt-4 border-t border-border/30">
+                                    <p className="text-[10px] font-semibold text-dim uppercase tracking-widest mb-3">
+                                      Itens do Pedido
+                                    </p>
+                                    <div className="flex flex-col gap-1.5">
+                                      {order.items.map((item) => (
+                                        <div key={item.id} className="flex items-center justify-between text-sm">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-muted">{item.title}</span>
+                                            <span className="text-dim text-xs">×{item.quantity}</span>
+                                            {item.sku && (
+                                              <span className="font-mono text-[10px] bg-bg-5 border border-border px-1.5 py-0.5 rounded text-dim">
+                                                {item.sku}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <span className="font-mono text-white">
+                                            {formatCurrency(item.unitPrice * item.quantity)}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
               {!loading && orders.length === 0 && (
-                <tr><td colSpan={9} className="py-16 text-center text-muted text-sm">Nenhum pedido encontrado</td></tr>
+                <tr>
+                  <td colSpan={11} className="py-16 text-center text-muted text-sm">
+                    Nenhum pedido encontrado
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
