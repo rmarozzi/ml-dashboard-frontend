@@ -56,12 +56,12 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Alerta custo não cadastrado */}
+      {/* Alerta custo nao cadastrado */}
       {canViewProfit && orders.some((o) => !(o as any).allCostsFound) && (
         <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-2.5">
           <AlertTriangle size={14} className="text-yellow-400 flex-shrink-0" />
           <p className="text-xs text-yellow-400">
-            Alguns pedidos com custo de produto não cadastrado — lucro pode estar impreciso
+            Alguns pedidos com custo de produto nao cadastrado - lucro pode estar impreciso
           </p>
         </div>
       )}
@@ -123,7 +123,7 @@ export default function OrdersPage() {
               {loading
                 ? Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i} className="border-b border-border/20">
-                      {Array.from({ length: 9 }).map((_, j) => (
+                      {Array.from({ length: 11 }).map((_, j) => (
                         <td key={j} className="px-4 py-3"><div className="skeleton h-4 rounded" /></td>
                       ))}
                     </tr>
@@ -155,25 +155,27 @@ export default function OrdersPage() {
                           </td>
                           {canViewProfit && (
                             <td className="px-4 py-3 font-mono text-sm text-red-400 whitespace-nowrap">
-                              {o.mlFee != null ? `-${formatCurrency(o.mlFee)}` : <span className="text-dim">—</span>}
+                              {(o.mlFee ?? 0) > 0
+                                ? `-${formatCurrency(o.mlFee)}`
+                                : <span className="text-dim">R$ 0,00</span>}
                             </td>
                           )}
                           {canViewProfit && (
                             <td className="px-4 py-3 font-mono text-sm text-red-400 whitespace-nowrap">
-                              {o.shippingCost != null && o.shippingCost > 0
+                              {(o.shippingCost ?? 0) > 0
                                 ? `-${formatCurrency(o.shippingCost)}`
-                                : <span className="text-dim">—</span>}
+                                : <span className="text-dim">R$ 0,00</span>}
                             </td>
                           )}
                           {canViewProfit && (
                             <td className={`px-4 py-3 font-mono text-sm whitespace-nowrap ${profitPositive ? "text-brand" : "text-red-400"}`}>
                               {o.profit != null
-                                ? <span className="flex items-center gap-1">
-                                    {profitPositive
-                                      ? <TrendingUp size={12} />
-                                      : <TrendingDown size={12} />}
+                                ? (
+                                  <span className="flex items-center gap-1">
+                                    {profitPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                                     {formatCurrency(o.profit)}
                                   </span>
+                                )
                                 : <span className="text-dim">—</span>}
                             </td>
                           )}
@@ -203,9 +205,10 @@ export default function OrdersPage() {
                                   Detalhamento Financeiro
                                 </p>
 
-                                <div className="flex flex-col gap-2 max-w-md">
+                                <div className="flex flex-col gap-0 max-w-md">
+
                                   {/* Receita Bruta */}
-                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                  <div className="flex justify-between items-center py-2 border-b border-border/20">
                                     <span className="text-sm text-muted">Receita Bruta</span>
                                     <span className="font-mono text-sm font-bold text-white">
                                       {formatCurrency(order.totalAmount)}
@@ -213,51 +216,49 @@ export default function OrdersPage() {
                                   </div>
 
                                   {/* Tarifa ML */}
-                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                  <div className="flex justify-between items-center py-2 border-b border-border/20">
                                     <span className="text-sm text-muted">Tarifa Mercado Livre</span>
                                     <span className="font-mono text-sm text-red-400">
-                                      {o.mlFee != null ? `-${formatCurrency(o.mlFee)}` : "—"}
+                                      -{formatCurrency(o.mlFee ?? 0)}
                                     </span>
                                   </div>
 
                                   {/* Frete */}
-                                  {o.shippingCost != null && o.shippingCost > 0 && (
-                                    <div className="flex justify-between items-center py-1.5 border-b border-border/20">
-                                      <span className="text-sm text-muted">Frete (cobrado do vendedor)</span>
-                                      <span className="font-mono text-sm text-red-400">
-                                        -{formatCurrency(o.shippingCost)}
-                                      </span>
-                                    </div>
-                                  )}
+                                  <div className="flex justify-between items-center py-2 border-b border-border/20">
+                                    <span className="text-sm text-muted">Frete (cobrado do vendedor)</span>
+                                    <span className={`font-mono text-sm ${(o.shippingCost ?? 0) > 0 ? "text-red-400" : "text-dim"}`}>
+                                      -{formatCurrency(o.shippingCost ?? 0)}
+                                    </span>
+                                  </div>
 
                                   {/* Imposto NF */}
-                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                  <div className="flex justify-between items-center py-2 border-b border-border/20">
                                     <span className="text-sm text-muted">
                                       Imposto NF
                                       {!o.allCostsFound && (
-                                        <span className="ml-2 text-[10px] text-yellow-400">(custo não cadastrado)</span>
+                                        <span className="ml-2 text-[10px] text-yellow-400">(custo nao cadastrado)</span>
                                       )}
                                     </span>
-                                    <span className={`font-mono text-sm ${o.nfTax > 0 ? "text-red-400" : "text-dim"}`}>
-                                      {o.nfTax != null && o.nfTax > 0
-                                        ? `-${formatCurrency(o.nfTax)}`
-                                        : "—"}
+                                    <span className={`font-mono text-sm ${(o.nfTax ?? 0) > 0 ? "text-red-400" : "text-dim"}`}>
+                                      -{formatCurrency(o.nfTax ?? 0)}
                                     </span>
                                   </div>
 
                                   {/* Custo do Produto */}
-                                  <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                  <div className="flex justify-between items-center py-2 border-b border-border/20">
                                     <span className="text-sm text-muted">Custo do Produto</span>
-                                    <span className={`font-mono text-sm ${o.productCost > 0 ? "text-red-400" : "text-yellow-400"}`}>
-                                      {o.productCost != null && o.productCost > 0
-                                        ? `-${formatCurrency(o.productCost)}`
-                                        : <span className="text-yellow-400">Verificar custo</span>}
-                                    </span>
+                                    {(o.productCost ?? 0) > 0 ? (
+                                      <span className="font-mono text-sm text-red-400">
+                                        -{formatCurrency(o.productCost)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-yellow-400 text-sm font-semibold">Verificar custo</span>
+                                    )}
                                   </div>
 
-                                  {/* Imposto ML — só aparece se > 0 */}
-                                  {o.mlTax != null && o.mlTax > 0 && (
-                                    <div className="flex justify-between items-center py-1.5 border-b border-border/20">
+                                  {/* Imposto ML - so aparece se > 0 */}
+                                  {(o.mlTax ?? 0) > 0 && (
+                                    <div className="flex justify-between items-center py-2 border-b border-border/20">
                                       <span className="text-sm text-muted">Imposto ML</span>
                                       <span className="font-mono text-sm text-red-400">
                                         -{formatCurrency(o.mlTax)}
@@ -265,32 +266,31 @@ export default function OrdersPage() {
                                     </div>
                                   )}
 
-                                  {/* Estorno — só aparece se > 0 */}
-                                  {o.estorno != null && o.estorno > 0 && (
-                                    <div className="flex justify-between items-center py-1.5 border-b border-border/20">
-                                      <span className="text-sm text-muted">Estorno / Bônus ML</span>
+                                  {/* Estorno - so aparece se > 0 */}
+                                  {(o.estorno ?? 0) > 0 && (
+                                    <div className="flex justify-between items-center py-2 border-b border-border/20">
+                                      <span className="text-sm text-muted">Estorno / Bonus ML</span>
                                       <span className="font-mono text-sm text-brand">
                                         +{formatCurrency(o.estorno)}
                                       </span>
                                     </div>
                                   )}
 
-                                  {/* Lucro Líquido */}
-                                  <div className="flex justify-between items-center py-2 mt-1 rounded-lg bg-bg-5 px-3">
-                                    <span className="text-sm font-bold text-white">Lucro Líquido</span>
+                                  {/* Lucro Liquido */}
+                                  <div className="flex justify-between items-center py-3 mt-2 rounded-lg bg-bg-5 px-3">
+                                    <span className="text-sm font-bold text-white">Lucro Liquido</span>
                                     <span className={`font-mono text-base font-bold ${profitPositive ? "text-brand" : "text-red-400"}`}>
-                                      {o.profit != null ? formatCurrency(o.profit) : "—"}
+                                      {formatCurrency(o.profit ?? 0)}
                                     </span>
                                   </div>
 
                                   {/* Margem */}
-                                  {o.margin != null && (
-                                    <div className="flex justify-end">
-                                      <span className={`text-xs font-mono ${profitPositive ? "text-brand" : "text-red-400"}`}>
-                                        Margem: {o.margin.toFixed(1)}%
-                                      </span>
-                                    </div>
-                                  )}
+                                  <div className="flex justify-end mt-1">
+                                    <span className={`text-xs font-mono ${profitPositive ? "text-brand" : "text-red-400"}`}>
+                                      Margem: {(o.margin ?? 0).toFixed(1)}%
+                                    </span>
+                                  </div>
+
                                 </div>
 
                                 {/* Itens do pedido */}
@@ -299,19 +299,19 @@ export default function OrdersPage() {
                                     <p className="text-[10px] font-semibold text-dim uppercase tracking-widest mb-3">
                                       Itens do Pedido
                                     </p>
-                                    <div className="flex flex-col gap-1.5">
+                                    <div className="flex flex-col gap-2">
                                       {order.items.map((item) => (
                                         <div key={item.id} className="flex items-center justify-between text-sm">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-muted">{item.title}</span>
-                                            <span className="text-dim text-xs">×{item.quantity}</span>
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <span className="text-muted truncate">{item.title}</span>
+                                            <span className="text-dim text-xs flex-shrink-0">x{item.quantity}</span>
                                             {item.sku && (
-                                              <span className="font-mono text-[10px] bg-bg-5 border border-border px-1.5 py-0.5 rounded text-dim">
+                                              <span className="font-mono text-[10px] bg-bg-5 border border-border px-1.5 py-0.5 rounded text-dim flex-shrink-0">
                                                 {item.sku}
                                               </span>
                                             )}
                                           </div>
-                                          <span className="font-mono text-white">
+                                          <span className="font-mono text-white flex-shrink-0 ml-4">
                                             {formatCurrency(item.unitPrice * item.quantity)}
                                           </span>
                                         </div>
@@ -319,6 +319,7 @@ export default function OrdersPage() {
                                     </div>
                                   </div>
                                 )}
+
                               </div>
                             </td>
                           </tr>
