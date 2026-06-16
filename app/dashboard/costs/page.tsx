@@ -18,22 +18,23 @@ export default function CostsPage() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-const [form, setForm] = useState({
-  sku: searchParams.get("sku") ?? "",
-  name: searchParams.get("name") ?? "",
-  cost: "",
-  taxRate: "",
-  validFrom: new Date().toISOString().slice(0, 10)
-});
-const searchParams =
-  typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search)
-    : new URLSearchParams();
 
-const [showModal, setShowModal] = useState(
-  !!searchParams.get("sku") || !!searchParams.get("name")
-);
+  const searchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
+
+  const [form, setForm] = useState({
+    sku: searchParams.get("sku") ?? "",
+    name: searchParams.get("name") ?? "",
+    cost: "",
+    taxRate: "",
+    validFrom: new Date().toISOString().slice(0, 10),
+  });
+
+  const [showModal, setShowModal] = useState(
+    !!searchParams.get("sku") || !!searchParams.get("name")
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { hasPlan } = usePlan();
