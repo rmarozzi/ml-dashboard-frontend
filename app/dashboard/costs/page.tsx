@@ -1,7 +1,7 @@
-/* eslint-disable react-hooks/rules-of-hooks, react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -13,34 +13,48 @@ import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ProductCost } from "@/lib/types";
 
-export default function CostsPage() {
+function CostsPageContent() {
+  const searchParams = useSearchParams();
+  const skuParam = searchParams.get("sku") ?? "";
+  const nameParam = searchParams.get("name") ?? "";
+
   const [costs, setCosts] = useState<ProductCost[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-
-  const searchParams =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search)
-      : new URLSearchParams();
+  const [showModal, setShowModal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
-    sku: searchParams.get("sku") ?? "",
-    name: searchParams.get("name") ?? "",
+    sku: "",
+    name: "",
     cost: "",
     taxRate: "",
     validFrom: new Date().toISOString().slice(0, 10),
   });
 
-  const [showModal, setShowModal] = useState(
-    !!searchParams.get("sku") || !!searchParams.get("name")
-  );
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const { hasPlan } = usePlan();
   const { can, isFuncionario } = usePermissions();
-
   const canManage = !isFuncionario || can("manage_costs");
+
+  // Pré-popula e abre o modal quando vier com sku/name na URL (ex: vindo da tela de Pedidos)
+  useEffect(() => {
+    if (skuParam || nameParam) {
+      setForm((prev) => ({
+        ...prev,
+        sku: skuParam || prev.sku,
+        name: nameParam || prev.name,
+      }));
+      setShowModal(true);
+    }
+  }, [skuParam, nameParam]);
+
+  useEffect(() => {
+    costsApi.list()
+      .then(({ data }) => setCosts(data.costs ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   if (!hasPlan("prata")) {
     return (
@@ -56,13 +70,6 @@ export default function CostsPage() {
     );
   }
 
-  useEffect(() => {
-    costsApi.list()
-      .then(({ data }) => setCosts(data.costs ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.sku.trim()) e.sku = "SKU obrigatório";
@@ -72,6 +79,11 @@ export default function CostsPage() {
     if (!form.validFrom) e.validFrom = "Data obrigatória";
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const resetForm = () => {
+    setForm({ sku: "", name: "", cost: "", taxRate: "", validFrom: new Date().toISOString().slice(0, 10) });
+    setErrors({});
   };
 
   const handleSave = async () => {
@@ -87,8 +99,16 @@ export default function CostsPage() {
       });
       setCosts((prev) => [data.cost, ...prev]);
       setShowModal(false);
-      setForm({ sku: "", name: "", cost: "", taxRate: "", validFrom: new Date().toISOString().slice(0, 10) });
+      resetForm();
+      // Limpa os parâmetros da URL após salvar, sem reload
+      window.history.replaceState({}, "", "/dashboard/costs");
     } catch {} finally { setSaving(false); }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    resetForm();
+    window.history.replaceState({}, "", "/dashboard/costs");
   };
 
   const handleDelete = async (id: number) => {
@@ -100,6 +120,8 @@ export default function CostsPage() {
   const totalValue = form.cost && form.taxRate
     ? (Number(form.cost) * (1 + Number(form.taxRate) / 100)).toFixed(2)
     : null;
+
+  const cameFromOrders = !!(skuParam || nameParam);
 
   return (
     <div className="flex flex-col gap-5">
@@ -174,8 +196,15 @@ export default function CostsPage() {
         ))}
       </div>
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Cadastrar Custo de Produto" className="max-w-md">
+      <Modal open={showModal} onClose={handleCloseModal} title="Cadastrar Custo de Produto" className="max-w-md">
         <div className="flex flex-col gap-4">
+          {cameFromOrders && (
+            <div className="bg-brand/10 border border-brand/30 rounded-lg px-3 py-2.5">
+              <p className="text-xs text-brand">
+                SKU e produto preenchidos automaticamente a partir do pedido. Complete o custo e a alíquota abaixo.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Input label="SKU do Produto" placeholder="MLB123456" value={form.sku}
               onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} error={errors.sku} />
@@ -186,7 +215,7 @@ export default function CostsPage() {
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} error={errors.name} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="Custo (R$)" type="number" placeholder="89.90" min="0" step="0.01" value={form.cost}
-              onChange={(e) => setForm((p) => ({ ...p, cost: e.target.value }))} error={errors.cost} />
+              onChange={(e) => setForm((p) => ({ ...p, cost: e.target.value }))} error={errors.cost} autoFocus={cameFromOrders} />
             <Input label="Alíquota de imposto (%)" type="number" placeholder="12" min="0" max="100" step="0.1" value={form.taxRate}
               onChange={(e) => setForm((p) => ({ ...p, taxRate: e.target.value }))} error={errors.taxRate} />
           </div>
@@ -197,11 +226,19 @@ export default function CostsPage() {
             </div>
           )}
           <div className="flex gap-2 pt-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setShowModal(false)}>Cancelar</Button>
+            <Button variant="secondary" className="flex-1" onClick={handleCloseModal}>Cancelar</Button>
             <Button variant="primary" className="flex-1" loading={saving} onClick={handleSave}>Salvar</Button>
           </div>
         </div>
       </Modal>
     </div>
+  );
+}
+
+export default function CostsPage() {
+  return (
+    <Suspense fallback={<div className="skeleton h-32 rounded-xl" />}>
+      <CostsPageContent />
+    </Suspense>
   );
 }
