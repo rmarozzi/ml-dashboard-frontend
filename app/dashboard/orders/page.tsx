@@ -282,11 +282,11 @@ export default function OrdersPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const item = order.items?.find((i: any) => !i.sku);
-                                  const params = new URLSearchParams();
-                                  if (item?.title) params.set("name", item.title);
-                                  if (item?.mlItemId) params.set("sku", item.mlItemId);
-                                  router.push(`/dashboard/costs?${params.toString()}`);
+                                  const item = order.items?.[0];
+const params = new URLSearchParams();
+if (item?.title) params.set("name", item.title);
+if (item?.sku) params.set("sku", item.sku);
+router.push(`/dashboard/costs?${params.toString()}`);
                                 }}
                                 className="flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded hover:bg-yellow-500/20 transition-colors"
                               >
@@ -373,11 +373,11 @@ export default function OrdersPage() {
                                       Preço de custo nao cadastrado — lucro e margem podem estar incorretos.{" "}
                                       <button
                                         onClick={() => {
-                                          const item = order.items?.find((i: any) => !i.sku);
-                                          const params = new URLSearchParams();
-                                          if (item?.title) params.set("name", item.title);
-                                          if (item?.mlItemId) params.set("sku", item.mlItemId);
-                                          router.push(`/dashboard/costs?${params.toString()}`);
+                                          const item = order.items?.[0];
+const params = new URLSearchParams();
+if (item?.title) params.set("name", item.title);
+if (item?.sku) params.set("sku", item.sku);
+router.push(`/dashboard/costs?${params.toString()}`);
                                         }}
                                         className="underline font-semibold hover:text-yellow-300"
                                       >
@@ -418,11 +418,11 @@ export default function OrdersPage() {
                                     ) : (
                                       <button
                                         onClick={() => {
-                                          const item = order.items?.find((i: any) => !i.sku);
-                                          const params = new URLSearchParams();
-                                          if (item?.title) params.set("name", item.title);
-                                          if (item?.mlItemId) params.set("sku", item.mlItemId);
-                                          router.push(`/dashboard/costs?${params.toString()}`);
+                                          const item = order.items?.[0];
+const params = new URLSearchParams();
+if (item?.title) params.set("name", item.title);
+if (item?.sku) params.set("sku", item.sku);
+router.push(`/dashboard/costs?${params.toString()}`);
                                         }}
                                         className="text-yellow-400 text-sm font-semibold hover:text-yellow-300 underline"
                                       >
@@ -474,13 +474,13 @@ export default function OrdersPage() {
                                               </span>
                                             ) : (
                                               <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  const params = new URLSearchParams();
-                                                  if (item.title) params.set("name", item.title);
-                                                  if (item.mlItemId) params.set("sku", item.mlItemId);
-                                                  router.push(`/dashboard/costs?${params.toString()}`);
-                                                }}
+onClick={(e) => {
+  e.stopPropagation();
+  const params = new URLSearchParams();
+  if (item.title) params.set("name", item.title);
+  if (item.sku) params.set("sku", item.sku);
+  router.push(`/dashboard/costs?${params.toString()}`);
+}}
                                                 className="flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-[10px] font-bold px-1.5 py-0.5 rounded hover:bg-yellow-500/20 flex-shrink-0"
                                               >
                                                 <AlertTriangle size={8} /> Cadastrar custo
