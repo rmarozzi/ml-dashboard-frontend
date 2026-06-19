@@ -7,7 +7,10 @@ export async function backendFetch(
   path: string,
 ): Promise<NextResponse> {
   const cookie = request.headers.get("cookie") ?? "";
-  const url = `${BACKEND_URL}${path}`;
+  // Propaga automaticamente os query params da requisição original
+  const queryString = request.nextUrl.search;
+  const hasQueryInPath = path.includes("?");
+  const url = `${BACKEND_URL}${path}${hasQueryInPath ? "" : queryString}`;
 
   let body: string | undefined;
   const contentType = request.headers.get("content-type") ?? "";
