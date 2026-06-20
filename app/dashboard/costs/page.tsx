@@ -37,7 +37,6 @@ function CostsPageContent() {
   const { can, isFuncionario } = usePermissions();
   const canManage = !isFuncionario || can("manage_costs");
 
-  // Pré-popula e abre o modal quando vier com sku/name na URL (ex: vindo da tela de Pedidos)
   useEffect(() => {
     if (skuParam || nameParam) {
       setForm((prev) => ({
@@ -100,7 +99,6 @@ function CostsPageContent() {
       setCosts((prev) => [data.cost, ...prev]);
       setShowModal(false);
       resetForm();
-      // Limpa os parâmetros da URL após salvar, sem reload
       window.history.replaceState({}, "", "/dashboard/costs");
     } catch {} finally { setSaving(false); }
   };
@@ -116,10 +114,6 @@ function CostsPageContent() {
     await costsApi.delete(id).catch(() => {});
     setCosts((prev) => prev.filter((c) => c.id !== id));
   };
-
-  const totalValue = form.cost && form.taxRate
-    ? (Number(form.cost) * (1 + Number(form.taxRate) / 100)).toFixed(2)
-    : null;
 
   const cameFromOrders = !!(skuParam || nameParam);
 
@@ -158,12 +152,12 @@ function CostsPageContent() {
                 </div>
                 <div className="flex gap-4 text-xs text-dim">
                   <span>Vigente desde {formatDate(cost.validFrom)}</span>
-                  <span>Alíquota: {cost.taxRate}%</span>
+                  <span>Alíquota NF sobre a venda: {cost.taxRate}%</span>
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
                 <div className="font-mono font-bold text-white text-base">{formatCurrency(cost.cost)}</div>
-                <div className="text-xs text-dim">c/ imposto: {formatCurrency(cost.cost * (1 + cost.taxRate / 100))}</div>
+                <div className="text-xs text-dim">custo do produto</div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {cost.history && cost.history.length > 0 && (
@@ -216,15 +210,12 @@ function CostsPageContent() {
           <div className="grid grid-cols-2 gap-3">
             <Input label="Custo (R$)" type="number" placeholder="89.90" min="0" step="0.01" value={form.cost}
               onChange={(e) => setForm((p) => ({ ...p, cost: e.target.value }))} error={errors.cost} autoFocus={cameFromOrders} />
-            <Input label="Alíquota de imposto (%)" type="number" placeholder="12" min="0" max="100" step="0.1" value={form.taxRate}
+            <Input label="Alíquota NF sobre a venda (%)" type="number" placeholder="12" min="0" max="100" step="0.1" value={form.taxRate}
               onChange={(e) => setForm((p) => ({ ...p, taxRate: e.target.value }))} error={errors.taxRate} />
           </div>
-          {totalValue && (
-            <div className="bg-bg-4 border border-border rounded-lg px-4 py-3">
-              <p className="text-xs text-dim mb-1">Preview — Custo total com imposto</p>
-              <p className="font-mono font-bold text-brand text-lg">R$ {totalValue}</p>
-            </div>
-          )}
+          <p className="text-xs text-dim -mt-1">
+            A alíquota é aplicada sobre o valor de venda de cada pedido, não sobre o custo do produto.
+          </p>
           <div className="flex gap-2 pt-2">
             <Button variant="secondary" className="flex-1" onClick={handleCloseModal}>Cancelar</Button>
             <Button variant="primary" className="flex-1" loading={saving} onClick={handleSave}>Salvar</Button>
