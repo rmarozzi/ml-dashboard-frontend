@@ -147,7 +147,7 @@ export interface Shipment {
   trackingNumber: string | null;
   cost: number | null;
   dateCreated: string;
-  token?: { apelido: string | null };
+  token?: { apelido: string | null; mlNickname?: string | null };
 }
 
 // ─── Product Cost ─────────────────────────────────────────────────────────────
