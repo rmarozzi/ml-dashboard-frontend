@@ -227,7 +227,7 @@ export default function ShipmentsPage() {
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">ID do Envio</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Conta ML</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">
-                  <button onClick={() => handleSort("status")} className="hover:text-white transition-colors">Status</button>
+                  Status
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Rastreio</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">
