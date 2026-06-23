@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Truck, Package, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Truck, Package, CheckCircle, Clock } from "lucide-react";
 import { KPICard } from "@/components/ui/KPICard";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 import { shipmentsApi } from "@/lib/api";
@@ -9,17 +9,21 @@ import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import { Shipment } from "@/lib/types";
 
+// Todos os status possíveis retornados pela API do Mercado Livre,
+// traduzidos para uma linguagem amigável ao usuário final.
 const STATUS_LABELS: Record<string, string> = {
-  pending: "Pendente",
-  ready_to_ship: "Pronto p/ envio",
+  pending: "Aguardando etiqueta",
+  handling: "Preparando envio",
+  ready_to_ship: "Pronto para despachar",
   shipped: "Em trânsito",
-  delivered: "Entregue",
   not_delivered: "Não entregue",
+  delivered: "Entregue",
   cancelled: "Cancelado",
 };
 
 const STATUS_COLORS: Record<string, { text: string; bg: string; border: string }> = {
   pending:        { text: "#eab308", bg: "rgba(234,179,8,0.1)",  border: "rgba(234,179,8,0.3)" },
+  handling:       { text: "#eab308", bg: "rgba(234,179,8,0.1)",  border: "rgba(234,179,8,0.3)" },
   ready_to_ship:  { text: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.3)" },
   shipped:        { text: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.3)" },
   delivered:      { text: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.3)" },
@@ -32,7 +36,7 @@ function ShipmentStatusBadge({ status }: { status: string }) {
   const label = STATUS_LABELS[status] ?? status;
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold font-mono tracking-wide"
+      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide whitespace-nowrap"
       style={{ color: c.text, background: c.bg, border: `1px solid ${c.border}` }}
     >
       {label}
@@ -60,8 +64,7 @@ export default function ShipmentsPage() {
     total: shipments.length,
     inTransit: shipments.filter((s) => s.status === "shipped" || s.status === "ready_to_ship").length,
     delivered: shipments.filter((s) => s.status === "delivered").length,
-    pending: shipments.filter((s) => s.status === "pending").length,
-    issues: shipments.filter((s) => s.status === "not_delivered" || s.status === "cancelled").length,
+    pending: shipments.filter((s) => s.status === "pending" || s.status === "handling").length,
   };
 
   return (
