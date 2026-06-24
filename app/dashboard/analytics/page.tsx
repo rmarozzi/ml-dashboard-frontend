@@ -16,12 +16,12 @@ import { formatCurrency, formatCurrencyShort } from "@/lib/utils";
 import { AnalyticsData } from "@/lib/types";
 
 const RANGES = [
+  { label: "Hoje", value: "today" },
   { label: "7 dias", value: "7d" },
   { label: "30 dias", value: "30d" },
   { label: "90 dias", value: "90d" },
   { label: "12 meses", value: "12m" },
 ];
-
 const PIE_COLORS = ["#22c55e", "#3b82f6", "#eab308", "#a855f7", "#f97316"];
 
 const TOOLTIP_STYLE = {
@@ -62,12 +62,12 @@ export default function AnalyticsPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <KPICard label="Receita Bruta" value={loading ? "—" : formatCurrencyShort(data?.revenue ?? 0)} sub="+14.2%" trend="up" icon={TrendingUp} loading={loading} />
-        <KPICard label="Custo Total" value={loading ? "—" : formatCurrencyShort(data?.cost ?? 0)} sub="+10.1%" trend="down" icon={TrendingDown} color="#ef4444" loading={loading} />
-        <KPICard label="Lucro Líquido" value={loading ? "—" : formatCurrencyShort(data?.profit ?? 0)} sub="+22.8%" trend="up" icon={DollarSign} loading={loading} />
-        <KPICard label="Margem Média" value={loading ? "—" : `${(data?.margin ?? 0).toFixed(1)}%`} sub="+2.1pp" trend="up" icon={Percent} color="#a855f7" loading={loading} />
-        <KPICard label="Qtd. Pedidos" value={loading ? "—" : (data?.orders ?? 0).toLocaleString("pt-BR")} sub="+9.8%" trend="up" icon={ShoppingCart} color="#3b82f6" loading={loading} />
-        <KPICard label="Ticket Médio" value={loading ? "—" : formatCurrencyShort(data?.avgTicket ?? 0)} sub="+3.8%" trend="up" icon={CreditCard} color="#eab308" loading={loading} />
+        <KPICard label="Receita Bruta" value={loading ? "—" : formatCurrencyShort(data?.revenue ?? 0)} icon={TrendingUp} loading={loading} />
+<KPICard label="Custo Total" value={loading ? "—" : formatCurrencyShort(data?.cost ?? 0)} icon={TrendingDown} color="#ef4444" loading={loading} />
+<KPICard label="Lucro Líquido" value={loading ? "—" : formatCurrencyShort(data?.profit ?? 0)} icon={DollarSign} loading={loading} />
+<KPICard label="Margem Média" value={loading ? "—" : `${(data?.margin ?? 0).toFixed(1)}%`} icon={Percent} color="#a855f7" loading={loading} />
+<KPICard label="Qtd. Pedidos" value={loading ? "—" : (data?.orders ?? 0).toLocaleString("pt-BR")} icon={ShoppingCart} color="#3b82f6" loading={loading} />
+<KPICard label="Ticket Médio" value={loading ? "—" : formatCurrencyShort(data?.avgTicket ?? 0)} icon={CreditCard} color="#eab308" loading={loading} />
       </div>
 
       {/* Area chart */}
