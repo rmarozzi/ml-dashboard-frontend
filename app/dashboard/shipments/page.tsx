@@ -1,12 +1,12 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import {
   Truck, Package, CheckCircle, Clock, Search, X,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { KPICard } from "@/components/ui/KPICard";
-import { UpgradeGate } from "@/components/ui/UpgradeGate";
+import { UpgradeGate } fimport { useEffect, useState, useCallback } from "react";rom "@/components/ui/UpgradeGate";
 import { shipmentsApi } from "@/lib/api";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -52,6 +52,7 @@ type SortField = "dateCreated" | "status" | "cost";
 type SortDir = "asc" | "desc";
 
 export default function ShipmentsPage() {
+  const router = useRouter();
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState("");
@@ -249,8 +250,18 @@ export default function ShipmentsPage() {
                 const accountLabel = s.token?.apelido || s.token?.mlNickname || "—";
                 return (
                   <tr key={s.id} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-muted">{s.mlShipmentId}</td>
-                    <td className="px-4 py-3 text-sm text-muted">{accountLabel}</td>
+<td className="px-4 py-3 font-mono text-xs">
+  {s.order?.mlId ? (
+    <button
+      onClick={() => router.push(`/dashboard/orders?search=${s.order.mlId}`)}
+      className="text-brand hover:underline transition-colors"
+    >
+      {s.mlShipmentId}
+    </button>
+  ) : (
+    <span className="text-muted">{s.mlShipmentId}</span>
+  )}
+</td>                    <td className="px-4 py-3 text-sm text-muted">{accountLabel}</td>
                     <td className="px-4 py-3"><ShipmentStatusBadge status={s.status} /></td>
                     <td className="px-4 py-3 font-mono text-xs text-muted">{s.trackingNumber ?? "—"}</td>
                     <td className="px-4 py-3 font-mono text-sm text-white">{s.cost != null ? formatCurrency(s.cost) : "—"}</td>
