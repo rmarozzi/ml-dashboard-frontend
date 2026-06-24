@@ -3,11 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import {
-  Truck, Package, CheckCircle, Clock, Search, X,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+  Truck,
+  Package,
+  CheckCircle,
+  Clock,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { KPICard } from "@/components/ui/KPICard";
-import { UpgradeGate } fimport { useEffect, useState, useCallback } from "react";rom "@/components/ui/UpgradeGate";
+import { UpgradeGate } from "@/components/ui/UpgradeGate";
 import { shipmentsApi } from "@/lib/api";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
