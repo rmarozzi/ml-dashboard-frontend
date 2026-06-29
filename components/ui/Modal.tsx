@@ -23,19 +23,25 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+
       <div className={cn(
-        "relative bg-bg-3 border border-border rounded-2xl p-7 w-full max-h-[85vh] overflow-y-auto animate-fade-up",
+        "relative bg-bg-3 border border-border rounded-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-fade-up",
         className
       )}>
+        {/* Header — sempre visível, nunca rola junto com o conteúdo */}
         {title && (
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-syne text-lg font-bold text-white">{title}</h2>
-            <button onClick={onClose} className="text-muted hover:text-white transition-colors">
+          <div className="flex items-center justify-between gap-3 px-7 py-5 border-b border-border/60 bg-bg-3 flex-shrink-0">
+            <h2 className="font-syne text-lg font-bold text-white truncate">{title}</h2>
+            <button onClick={onClose} className="text-muted hover:text-white transition-colors flex-shrink-0">
               <X size={18} />
             </button>
           </div>
         )}
-        {children}
+
+        {/* Corpo rolável */}
+        <div className="overflow-y-auto px-7 py-6 flex-1 min-h-0">
+          {children}
+        </div>
       </div>
     </div>
   );
