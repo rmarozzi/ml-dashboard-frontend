@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react";
+import { Plus, Trash2, RefreshCw, AlertTriangle, CheckCircle, Percent, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { StatusBadge } from "@/components/ui/Badge";
 import { PlanBadge } from "@/components/ui/PlanBadge";
-import { authApi, mlApi, subscriptionApi } from "@/lib/api";
+import { Modal } from "@/components/ui/Modal";
+import { authApi, mlApi, subscriptionApi, taxRateApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
+import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { MlToken, Subscription } from "@/lib/types";
+import { MlToken, Subscription, TaxSetting } from "@/lib/types";
 
 export default function ProfilePage() {
   const { user, refresh } = useAuth();
-  const { slug: planSlug } = usePlan();
+  const { slug: planSlug, hasPlan } = usePlan();
+  const { can, isFuncionario } = usePermissions();
   const [tokens, setTokens] = useState<MlToken[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +25,18 @@ export default function ProfilePage() {
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState(false);
   const [savingPw, setSavingPw] = useState(false);
+
+  // Alíquota de imposto
+  const [taxCurrent, setTaxCurrent] = useState<TaxSetting | null>(null);
+  const [taxHistory, setTaxHistory] = useState<TaxSetting[]>([]);
+  const [taxLoading, setTaxLoading] = useState(true);
+  const [showTaxModal, setShowTaxModal] = useState(false);
+  const [showTaxHistory, setShowTaxHistory] = useState(false);
+  const [taxForm, setTaxForm] = useState({ rate: "", validFrom: new Date().toISOString().slice(0, 10) });
+  const [taxSaving, setTaxSaving] = useState(false);
+  const [taxError, setTaxError] = useState("");
+
+  const canManage = !isFuncionario || can("manage_costs");
 
   useEffect(() => {
     Promise.all([mlApi.status(), subscriptionApi.get()])
@@ -32,6 +47,17 @@ export default function ProfilePage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!hasPlan("prata")) { setTaxLoading(false); return; }
+    taxRateApi.get()
+      .then(({ data }) => {
+        setTaxCurrent(data.current);
+        setTaxHistory(data.history ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setTaxLoading(false));
+  }, [hasPlan]);
 
   const handleDisconnect = async (tokenId: number) => {
     if (!confirm("Desconectar esta conta do Mercado Livre?")) return;
@@ -57,6 +83,27 @@ export default function ProfilePage() {
     } catch (err: any) {
       setPwError(err?.response?.data?.message ?? "Senha atual incorreta");
     } finally { setSavingPw(false); }
+  };
+
+  const handleSaveTaxRate = async () => {
+    setTaxError("");
+    if (!taxForm.rate || isNaN(Number(taxForm.rate)) || Number(taxForm.rate) < 0) {
+      setTaxError("Informe uma alíquota válida");
+      return;
+    }
+    setTaxSaving(true);
+    try {
+      const { data } = await taxRateApi.create({
+        rate: Number(taxForm.rate),
+        validFrom: taxCurrent ? taxForm.validFrom : undefined, // primeira cadastro é sempre retroativa
+      });
+      setTaxCurrent(data.setting);
+      setTaxHistory((prev) => [data.setting, ...prev]);
+      setShowTaxModal(false);
+      setTaxForm({ rate: "", validFrom: new Date().toISOString().slice(0, 10) });
+    } catch (err: any) {
+      setTaxError(err?.response?.data?.message ?? "Erro ao salvar alíquota");
+    } finally { setTaxSaving(false); }
   };
 
   return (
@@ -144,6 +191,66 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Alíquota de Imposto NF (global) */}
+      {hasPlan("prata") && (
+        <div className="bg-bg-3 border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="font-syne text-[15px] font-bold text-white">Alíquota de Imposto (NF)</h2>
+              <p className="text-xs text-dim mt-0.5">Aplicada sobre a receita bruta de todas as vendas</p>
+            </div>
+            {canManage && (
+              <Button variant="secondary" size="sm" onClick={() => setShowTaxModal(true)}>
+                <Percent size={13} /> {taxCurrent ? "Alterar" : "Configurar"}
+              </Button>
+            )}
+          </div>
+
+          {taxLoading ? (
+            <div className="skeleton h-16 rounded-lg mt-4" />
+          ) : taxCurrent ? (
+            <div className="mt-4">
+              <div className="flex items-center gap-3 border border-border rounded-lg px-4 py-3.5">
+                <div className="w-10 h-10 rounded-full bg-brand/15 flex items-center justify-center flex-shrink-0">
+                  <Percent size={17} className="text-brand" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-syne text-xl font-bold text-white">{taxCurrent.rate}%</p>
+                  <p className="text-xs text-dim">Vigente desde {formatDate(taxCurrent.validFrom)}</p>
+                </div>
+                {taxHistory.length > 1 && (
+                  <button onClick={() => setShowTaxHistory((p) => !p)} className="text-dim hover:text-muted transition-colors p-1">
+                    {showTaxHistory ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  </button>
+                )}
+              </div>
+              {showTaxHistory && taxHistory.length > 1 && (
+                <div className="border-t border-border/50 mt-2 pt-3">
+                  <p className="text-[10px] text-dim uppercase tracking-widest mb-2">Histórico de alterações</p>
+                  <div className="space-y-1.5">
+                    {taxHistory.slice(1).map((h) => (
+                      <div key={h.id} className="flex justify-between text-xs">
+                        <span className="text-dim">Vigente até a alteração seguinte</span>
+                        <span className="font-mono text-muted">{h.rate}% · desde {formatDate(h.validFrom)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-6 mt-2">
+              <p className="text-muted text-sm mb-3">Nenhuma alíquota configurada ainda</p>
+              {canManage && (
+                <Button variant="primary" size="sm" onClick={() => setShowTaxModal(true)}>
+                  <Percent size={13} /> Configurar alíquota
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Change password */}
       <div className="bg-bg-3 border border-border rounded-xl p-6">
         <h2 className="font-syne text-[15px] font-bold text-white mb-5">Alterar Senha</h2>
@@ -167,6 +274,51 @@ export default function ProfilePage() {
           <Button variant="primary" size="md" loading={savingPw} onClick={handleChangePassword}>Alterar senha</Button>
         </div>
       </div>
+
+      {/* Modal: configurar/alterar alíquota */}
+      <Modal open={showTaxModal} onClose={() => setShowTaxModal(false)} title={taxCurrent ? "Alterar Alíquota" : "Configurar Alíquota"} className="max-w-sm">
+        <div className="flex flex-col gap-4">
+          <Input
+            label="Alíquota de Imposto NF (%)"
+            type="number"
+            placeholder="9.0"
+            min="0"
+            max="100"
+            step="0.1"
+            value={taxForm.rate}
+            onChange={(e) => setTaxForm((p) => ({ ...p, rate: e.target.value }))}
+          />
+
+          {taxCurrent ? (
+            <>
+              <Input
+                label="Vigente a partir de"
+                type="date"
+                value={taxForm.validFrom}
+                onChange={(e) => setTaxForm((p) => ({ ...p, validFrom: e.target.value }))}
+              />
+              <p className="text-xs text-dim -mt-1">
+                Vendas anteriores a esta data continuam usando a alíquota de {taxCurrent.rate}%.
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-dim -mt-1">
+              Esta será a primeira alíquota cadastrada — vale para todas as vendas, incluindo as anteriores a hoje.
+            </p>
+          )}
+
+          {taxError && (
+            <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              <AlertTriangle size={13} /> {taxError}
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setShowTaxModal(false)}>Cancelar</Button>
+            <Button variant="primary" className="flex-1" loading={taxSaving} onClick={handleSaveTaxRate}>Salvar</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
