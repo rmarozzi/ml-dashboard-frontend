@@ -164,6 +164,11 @@ export interface ProductCost {
   cost: number;
   taxRate: number;
   validFrom: string;
+  ean: string | null;
+  ncm: string | null;
+  cest: string | null;
+  codFabricante: string | null;
+  marca: string | null;
   history?: ProductCost[];
 }
 
