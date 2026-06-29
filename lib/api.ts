@@ -57,6 +57,8 @@ export const costsApi = {
   create: (data: { sku: string; name: string; cost: number; ean?: string; ncm?: string; cest?: string; codFabricante?: string; marca?: string }) =>
     api.post("/costs", data),
   bulkCreate: (products: any[]) => api.post("/costs/bulk", { products }),
+  update: (sku: string, data: { name?: string; cost?: number; validFrom?: string; ean?: string; ncm?: string; cest?: string; codFabricante?: string; marca?: string }) =>
+    api.put(`/costs/${encodeURIComponent(sku)}`, data),
   delete: (id: number) => api.delete(`/costs/${id}`),
 };
 

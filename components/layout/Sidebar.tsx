@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, Truck, BarChart2, DollarSign,
   Users, Settings, User, Bell, LogOut, Zap, Lock,
-  CreditCard, Activity, RefreshCw,
+  CreditCard, Activity, RefreshCw,Edit,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
@@ -29,6 +29,7 @@ const CLIENT_NAV: NavItem[] = [
   { href: "/dashboard/shipments", label: "Envios",          icon: Truck,         permission: "view_shipments" },
   { href: "/dashboard/analytics", label: "Analytics",       icon: BarChart2,     requiredPlan: "ouro", permission: "view_analytics" },
   { href: "/dashboard/costs",     label: "Cadastro de Produtos", icon: DollarSign,    requiredPlan: "prata" },
+  { href: "/dashboard/edit-products", label: "Alterar Produtos", icon: Edit,    requiredPlan: "prata" },
   { href: "/dashboard/employees", label: "Funcionários",    icon: Users,         requiredPlan: "prata" },
   { href: "/dashboard/profile",   label: "Perfil & ML",     icon: User },
   { href: "/dashboard/settings",  label: "Configurações",   icon: Settings },

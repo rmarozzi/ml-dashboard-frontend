@@ -18,6 +18,7 @@ const TITLES: Record<string, string> = {
   "/dashboard/settings":   "Configurações",
   "/dashboard/sync-debug": "Debug de Sync",
   "/dashboard/connect":    "Conectar Mercado Livre",
+  "/dashboard/edit-products": "Alterar Produtos",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
