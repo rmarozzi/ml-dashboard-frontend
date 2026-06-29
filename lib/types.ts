@@ -63,6 +63,11 @@ export interface Order {
   id: number;
   mlId: string;
   packId: string | null;
+  buyerName: string | null;
+  buyerDocType: string | null;
+  buyerDocNumber: string | null;
+  buyerCity: string | null;
+  buyerState: string | null;
   status: OrderStatus;
   totalAmount: number;
   netReceived: number | null;

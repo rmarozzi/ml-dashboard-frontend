@@ -13,7 +13,7 @@ import { ordersApi, exportApi } from "@/lib/api";
 import { usePlan } from "@/contexts/PlanContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
-import { formatCurrency, formatDateTime, downloadBlob } from "@/lib/utils";
+import { formatCurrency, formatDateTime, downloadBlob, formatDocument, getInitials } from "@/lib/utils";
 
 const STATUSES = ["paid", "pending", "shipped", "cancelled"];
 const STATUS_LABELS: Record<string, string> = {
@@ -361,10 +361,49 @@ router.push(`/dashboard/costs?${params.toString()}`);
                         {isExpanded && canViewProfit && (
                           <tr key={`exp-${order.id}`} className="border-b border-border/20">
                             <td colSpan={11} className="p-0">
-                              <div className="bg-bg-4 border-t border-border/30 px-6 py-5">
-                                <p className="text-[10px] font-semibold text-dim uppercase tracking-widest mb-4">
-                                  Detalhamento Financeiro
-                                </p>
+<div className="bg-bg-4 border-t border-border/30 px-6 py-5">
+
+  {/* Card do Cliente */}
+  {order.buyerName && (
+    <>
+      <p className="text-[10px] font-semibold text-dim uppercase tracking-widest mb-3">
+        Dados do Cliente
+      </p>
+      <div className="bg-bg-3 border border-border rounded-xl px-4 py-3.5 mb-5 flex items-center gap-3.5">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
+          <span className="font-syne font-bold text-brand text-sm">
+            {getInitials(order.buyerName)}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-sm font-semibold text-white">{order.buyerName}</span>
+            {order.buyerDocType && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                order.buyerDocType === "CNPJ"
+                  ? "bg-purple-500/12 text-purple-400 border-purple-500/30"
+                  : "bg-blue-500/12 text-blue-400 border-blue-500/30"
+              }`}>
+                {order.buyerDocType === "CNPJ" ? "PJ" : "PF"}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-3.5 text-xs text-muted flex-wrap">
+            {order.buyerDocNumber && (
+              <span>{order.buyerDocType ?? "Doc"}: <span className="font-mono text-[#a8a8c0]">{formatDocument(order.buyerDocNumber, order.buyerDocType)}</span></span>
+            )}
+            {(order.buyerCity || order.buyerState) && (
+              <span>{[order.buyerCity, order.buyerState].filter(Boolean).join(", ")}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+
+  <p className="text-[10px] font-semibold text-dim uppercase tracking-widest mb-4">
+    Detalhamento Financeiro
+  </p>
 
                                 {hasMissingCost && (
                                   <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 mb-4">
