@@ -50,9 +50,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar title={title} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-5 lg:p-7">
-          <div className="max-w-[1200px] mx-auto animate-fade-up">
-            {children}
-          </div>
+        <div className="max-w-[1200px] mx-auto">
+  {children}
+</div>
         </main>
       </div>
     </div>
