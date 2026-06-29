@@ -54,8 +54,9 @@ export const analyticsApi = {
 // ─── Costs ───────────────────────────────────────────────────────────────────
 export const costsApi = {
   list: () => api.get("/costs"),
-  create: (data: { sku: string; name: string; cost: number }) =>
+  create: (data: { sku: string; name: string; cost: number; ean?: string; ncm?: string; cest?: string; codFabricante?: string; marca?: string }) =>
     api.post("/costs", data),
+  bulkCreate: (products: any[]) => api.post("/costs/bulk", { products }),
   delete: (id: number) => api.delete(`/costs/${id}`),
 };
 
