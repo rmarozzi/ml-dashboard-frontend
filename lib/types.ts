@@ -225,3 +225,9 @@ export interface SyncLog {
   createdAt: string;
   token: { apelido: string | null; mlNickname: string | null };
 }
+export interface TaxSetting {
+  id: number;
+  rate: number;
+  validFrom: string;
+  createdAt: string;
+}

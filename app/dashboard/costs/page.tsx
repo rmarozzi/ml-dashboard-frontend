@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Package } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -13,7 +13,7 @@ import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ProductCost } from "@/lib/types";
 
-function CostsPageContent() {
+function ProductsPageContent() {
   const searchParams = useSearchParams();
   const skuParam = searchParams.get("sku") ?? "";
   const nameParam = searchParams.get("name") ?? "";
@@ -25,13 +25,7 @@ function CostsPageContent() {
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [form, setForm] = useState({
-    sku: "",
-    name: "",
-    cost: "",
-    taxRate: "",
-    validFrom: new Date().toISOString().slice(0, 10),
-  });
+  const [form, setForm] = useState({ sku: "", name: "", cost: "" });
 
   const { hasPlan } = usePlan();
   const { can, isFuncionario } = usePermissions();
@@ -39,11 +33,7 @@ function CostsPageContent() {
 
   useEffect(() => {
     if (skuParam || nameParam) {
-      setForm((prev) => ({
-        ...prev,
-        sku: skuParam || prev.sku,
-        name: nameParam || prev.name,
-      }));
+      setForm((prev) => ({ ...prev, sku: skuParam || prev.sku, name: nameParam || prev.name }));
       setShowModal(true);
     }
   }, [skuParam, nameParam]);
@@ -57,10 +47,9 @@ function CostsPageContent() {
 
   if (!hasPlan("prata")) {
     return (
-      <UpgradeGate feature="Preços de Custo" requiredPlan="prata"
+      <UpgradeGate feature="Cadastro de Produtos" requiredPlan="prata"
         benefits={[
           "Cadastre o custo de cada produto por SKU",
-          "Histórico de variação de preço com datas",
           "Cálculo automático de lucro líquido por pedido",
           "Margem percentual real por venda",
           "Alerta de produtos sem custo cadastrado",
@@ -74,43 +63,35 @@ function CostsPageContent() {
     if (!form.sku.trim()) e.sku = "SKU obrigatório";
     if (!form.name.trim()) e.name = "Nome obrigatório";
     if (!form.cost || isNaN(Number(form.cost)) || Number(form.cost) < 0) e.cost = "Custo inválido";
-    if (!form.taxRate || isNaN(Number(form.taxRate))) e.taxRate = "Alíquota inválida";
-    if (!form.validFrom) e.validFrom = "Data obrigatória";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const resetForm = () => {
-    setForm({ sku: "", name: "", cost: "", taxRate: "", validFrom: new Date().toISOString().slice(0, 10) });
-    setErrors({});
-  };
+  const resetForm = () => { setForm({ sku: "", name: "", cost: "" }); setErrors({}); };
 
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
     try {
       const { data } = await costsApi.create({
-        sku: form.sku.trim(),
-        name: form.name.trim(),
-        cost: Number(form.cost),
-        taxRate: Number(form.taxRate),
-        validFrom: form.validFrom,
+        sku: form.sku.trim(), name: form.name.trim(), cost: Number(form.cost),
       });
       setCosts((prev) => [data.cost, ...prev]);
       setShowModal(false);
       resetForm();
       window.history.replaceState({}, "", "/dashboard/costs");
-    } catch {} finally { setSaving(false); }
+    } catch (err: any) {
+      setErrors({ sku: err?.response?.data?.message ?? "Erro ao cadastrar produto" });
+    } finally { setSaving(false); }
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
-    resetForm();
+    setShowModal(false); resetForm();
     window.history.replaceState({}, "", "/dashboard/costs");
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Remover este custo?")) return;
+    if (!confirm("Remover este produto?")) return;
     await costsApi.delete(id).catch(() => {});
     setCosts((prev) => prev.filter((c) => c.id !== id));
   };
@@ -120,26 +101,22 @@ function CostsPageContent() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted">{costs.length} produto{costs.length !== 1 ? "s" : ""} cadastrado{costs.length !== 1 ? "s" : ""}</p>
-        </div>
+        <p className="text-sm text-muted">{costs.length} produto{costs.length !== 1 ? "s" : ""} cadastrado{costs.length !== 1 ? "s" : ""}</p>
         {canManage && (
           <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
-            <Plus size={14} /> Cadastrar Custo
+            <Plus size={14} /> Cadastrar Produto
           </Button>
         )}
       </div>
 
       <div className="flex flex-col gap-2">
-        {loading ? Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="skeleton h-16 rounded-xl" />
-        )) : costs.length === 0 ? (
+        {loading ? Array.from({ length: 5 }).map((_, i) => <div key={i} className="skeleton h-16 rounded-xl" />) :
+         costs.length === 0 ? (
           <div className="bg-bg-3 border border-dashed border-border rounded-xl p-12 text-center">
-            <p className="text-muted text-sm mb-3">Nenhum custo cadastrado ainda</p>
+            <Package size={28} className="text-dim mx-auto mb-3" />
+            <p className="text-muted text-sm mb-3">Nenhum produto cadastrado ainda</p>
             {canManage && (
-              <Button variant="primary" size="sm" onClick={() => setShowModal(true)}>
-                <Plus size={14} /> Cadastrar primeiro custo
-              </Button>
+              <Button variant="primary" size="sm" onClick={() => setShowModal(true)}><Plus size={14} /> Cadastrar primeiro produto</Button>
             )}
           </div>
         ) : costs.map((cost) => (
@@ -150,10 +127,7 @@ function CostsPageContent() {
                   <span className="font-mono text-xs bg-bg-5 border border-border px-2 py-0.5 rounded text-muted">{cost.sku}</span>
                   <span className="text-sm font-semibold text-white truncate">{cost.name}</span>
                 </div>
-                <div className="flex gap-4 text-xs text-dim">
-                  <span>Vigente desde {formatDate(cost.validFrom)}</span>
-                  <span>Alíquota NF sobre a venda: {cost.taxRate}%</span>
-                </div>
+                <p className="text-xs text-dim">Vigente desde {formatDate(cost.validFrom)}</p>
               </div>
               <div className="text-right flex-shrink-0">
                 <div className="font-mono font-bold text-white text-base">{formatCurrency(cost.cost)}</div>
@@ -161,15 +135,12 @@ function CostsPageContent() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {cost.history && cost.history.length > 0 && (
-                  <button onClick={() => setExpanded(expanded === cost.id ? null : cost.id)}
-                    className="text-dim hover:text-muted transition-colors p-1">
+                  <button onClick={() => setExpanded(expanded === cost.id ? null : cost.id)} className="text-dim hover:text-muted transition-colors p-1">
                     {expanded === cost.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                   </button>
                 )}
                 {canManage && (
-                  <button onClick={() => handleDelete(cost.id)} className="text-dim hover:text-red-400 transition-colors p-1">
-                    <Trash2 size={14} />
-                  </button>
+                  <button onClick={() => handleDelete(cost.id)} className="text-dim hover:text-red-400 transition-colors p-1"><Trash2 size={14} /></button>
                 )}
               </div>
             </div>
@@ -190,32 +161,20 @@ function CostsPageContent() {
         ))}
       </div>
 
-      <Modal open={showModal} onClose={handleCloseModal} title="Cadastrar Custo de Produto" className="max-w-md">
+      <Modal open={showModal} onClose={handleCloseModal} title="Cadastrar Produto" className="max-w-md">
         <div className="flex flex-col gap-4">
           {cameFromOrders && (
             <div className="bg-brand/10 border border-brand/30 rounded-lg px-3 py-2.5">
-              <p className="text-xs text-brand">
-                SKU e produto preenchidos automaticamente a partir do pedido. Complete o custo e a alíquota abaixo.
-              </p>
+              <p className="text-xs text-brand">SKU e produto preenchidos automaticamente a partir do pedido. Complete o custo abaixo.</p>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="SKU do Produto" placeholder="MLB123456" value={form.sku}
-              onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} error={errors.sku} />
-            <Input label="Vigência a partir de" type="date" value={form.validFrom}
-              onChange={(e) => setForm((p) => ({ ...p, validFrom: e.target.value }))} error={errors.validFrom} />
-          </div>
+          <Input label="SKU do Produto" placeholder="MLB123456" value={form.sku}
+            onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))} error={errors.sku} />
           <Input label="Nome do Produto" placeholder="Tênis Nike Air Max 270" value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} error={errors.name} />
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Custo (R$)" type="number" placeholder="89.90" min="0" step="0.01" value={form.cost}
-              onChange={(e) => setForm((p) => ({ ...p, cost: e.target.value }))} error={errors.cost} autoFocus={cameFromOrders} />
-            <Input label="Alíquota NF sobre a venda (%)" type="number" placeholder="12" min="0" max="100" step="0.1" value={form.taxRate}
-              onChange={(e) => setForm((p) => ({ ...p, taxRate: e.target.value }))} error={errors.taxRate} />
-          </div>
-          <p className="text-xs text-dim -mt-1">
-            A alíquota é aplicada sobre o valor de venda de cada pedido, não sobre o custo do produto.
-          </p>
+          <Input label="Custo (R$)" type="number" placeholder="89.90" min="0" step="0.01" value={form.cost}
+            onChange={(e) => setForm((p) => ({ ...p, cost: e.target.value }))} error={errors.cost} autoFocus={cameFromOrders} />
+          <p className="text-xs text-dim -mt-1">Este valor será aplicado a todas as vendas deste produto, incluindo as anteriores ao cadastro.</p>
           <div className="flex gap-2 pt-2">
             <Button variant="secondary" className="flex-1" onClick={handleCloseModal}>Cancelar</Button>
             <Button variant="primary" className="flex-1" loading={saving} onClick={handleSave}>Salvar</Button>
@@ -226,10 +185,10 @@ function CostsPageContent() {
   );
 }
 
-export default function CostsPage() {
+export default function ProductsPage() {
   return (
     <Suspense fallback={<div className="skeleton h-32 rounded-xl" />}>
-      <CostsPageContent />
+      <ProductsPageContent />
     </Suspense>
   );
 }

@@ -12,7 +12,7 @@ const TITLES: Record<string, string> = {
   "/dashboard/orders":     "Pedidos",
   "/dashboard/shipments":  "Envios",
   "/dashboard/analytics":  "Analytics",
-  "/dashboard/costs":      "Preços de Custo",
+  "/dashboard/costs":      "Cadastro de Produtos",
   "/dashboard/employees":  "Funcionários",
   "/dashboard/profile":    "Perfil & Contas ML",
   "/dashboard/settings":   "Configurações",

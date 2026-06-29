@@ -28,7 +28,7 @@ const CLIENT_NAV: NavItem[] = [
   { href: "/dashboard/orders",    label: "Pedidos",         icon: ShoppingCart,  permission: "view_orders" },
   { href: "/dashboard/shipments", label: "Envios",          icon: Truck,         permission: "view_shipments" },
   { href: "/dashboard/analytics", label: "Analytics",       icon: BarChart2,     requiredPlan: "ouro", permission: "view_analytics" },
-  { href: "/dashboard/costs",     label: "Preços de Custo", icon: DollarSign,    requiredPlan: "prata" },
+  { href: "/dashboard/costs",     label: "Cadastro de Produtos", icon: DollarSign,    requiredPlan: "prata" },
   { href: "/dashboard/employees", label: "Funcionários",    icon: Users,         requiredPlan: "prata" },
   { href: "/dashboard/profile",   label: "Perfil & ML",     icon: User },
   { href: "/dashboard/settings",  label: "Configurações",   icon: Settings },

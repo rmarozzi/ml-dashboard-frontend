@@ -54,9 +54,14 @@ export const analyticsApi = {
 // ─── Costs ───────────────────────────────────────────────────────────────────
 export const costsApi = {
   list: () => api.get("/costs"),
-  create: (data: { sku: string; name: string; cost: number; taxRate: number; validFrom: string }) =>
+  create: (data: { sku: string; name: string; cost: number }) =>
     api.post("/costs", data),
   delete: (id: number) => api.delete(`/costs/${id}`),
+};
+
+export const taxRateApi = {
+  get: () => api.get("/settings/tax-rate"),
+  create: (data: { rate: number; validFrom?: string }) => api.post("/settings/tax-rate", data),
 };
 
 // ─── Employees ───────────────────────────────────────────────────────────────
