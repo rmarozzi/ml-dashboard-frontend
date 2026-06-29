@@ -269,13 +269,13 @@ export default function OrdersPage() {
                           onClick={() => setExpanded(isExpanded ? null : order.id)}
                         >
                           <td className="px-4 py-3 font-mono text-xs text-muted whitespace-nowrap">
-                            <div className="flex items-center gap-1.5">
-                              {hasMissingCost && canViewProfit && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0" title="Sem preço de custo cadastrado" />
-                              )}
-                              {order.mlId}
-                            </div>
-                          </td>
+  <div className="flex items-center gap-1.5">
+    {hasMissingCost && canViewProfit && (
+      <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0" title="Sem preço de custo cadastrado" />
+    )}
+    {order.packId || order.mlId}
+  </div>
+</td>
 
                           <td className="px-4 py-3 whitespace-nowrap">
                             {hasMissingSku ? (

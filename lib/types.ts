@@ -62,6 +62,7 @@ export type OrderStatus = "paid" | "pending" | "cancelled" | "shipped";
 export interface Order {
   id: number;
   mlId: string;
+  packId: string | null;
   status: OrderStatus;
   totalAmount: number;
   netReceived: number | null;
