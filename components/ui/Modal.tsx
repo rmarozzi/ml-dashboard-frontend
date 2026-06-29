@@ -21,13 +21,16 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    // items-[safe_center]: centraliza verticalmente quando há espaço,
+    // mas se o conteúdo for maior que a tela, cai para o topo (com a
+    // margem do padding) em vez de cortar o topo do modal.
+    <div className="fixed inset-0 z-50 flex items-[safe_center] justify-center p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       <div className={cn(
-  "relative bg-bg-3 border border-border rounded-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-fade-up my-8",
-  className
-)}>
+        "relative bg-bg-3 border border-border rounded-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-fade-up my-auto",
+        className
+      )}>
         {/* Header — sempre visível, nunca rola junto com o conteúdo */}
         {title && (
           <div className="flex items-center justify-between gap-3 px-7 py-5 border-b border-border/60 bg-bg-3 flex-shrink-0">
