@@ -170,26 +170,6 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Subscription (lider only) */}
-      {user?.role === "lider" && planSlug && (
-        <div className="bg-bg-3 border border-border rounded-xl p-6">
-          <h2 className="font-syne text-[15px] font-bold text-white mb-5">Assinatura</h2>
-          {loading ? <div className="skeleton h-20 rounded-lg" /> : subscription ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <PlanBadge slug={planSlug} />
-                <StatusBadge status={subscription.status} />
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm border-t border-border pt-4">
-                <div><p className="text-dim text-xs mb-1">Valor mensal</p><p className="font-mono font-bold text-white">{formatCurrency(subscription.plan.preco)}</p></div>
-                <div><p className="text-dim text-xs mb-1">Próxima cobrança</p><p className="text-muted">{formatDate(subscription.currentPeriodEnd)}</p></div>
-                <div><p className="text-dim text-xs mb-1">Contas ML</p><p className="text-muted">{subscription.plan.maxMlAccounts === -1 ? "Ilimitadas" : subscription.plan.maxMlAccounts}</p></div>
-                <div><p className="text-dim text-xs mb-1">Funcionários</p><p className="text-muted">{subscription.plan.maxFuncionarios === -1 ? "Ilimitados" : subscription.plan.maxFuncionarios}</p></div>
-              </div>
-            </div>
-          ) : <p className="text-muted text-sm">Nenhuma assinatura ativa</p>}
-        </div>
-      )}
 
       {/* Alíquota de Imposto NF (global) */}
       {hasPlan("prata") && (
