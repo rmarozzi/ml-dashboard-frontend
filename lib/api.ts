@@ -46,11 +46,6 @@ export const shipmentsApi = {
   list: (params?: Record<string, string>) => api.get("/shipments", { params }),
 };
 
-// ─── Analytics ───────────────────────────────────────────────────────────────
-export const analyticsApi = {
-  get: (params?: Record<string, string>) => api.get("/analytics", { params }),
-};
-
 // ─── Costs ───────────────────────────────────────────────────────────────────
 export const costsApi = {
   list: () => api.get("/costs"),

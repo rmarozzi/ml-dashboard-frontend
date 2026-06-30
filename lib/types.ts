@@ -138,25 +138,6 @@ export interface MonthlyPoint {
   lucro: number | null;
 }
 
-// ─── Analytics ───────────────────────────────────────────────────────────────
-export interface AnalyticsData {
-  revenue: number;
-  cost: number;
-  profit: number;
-  margin: number;
-  orders: number;
-  avgTicket: number;
-  byPeriod: PeriodPoint[];
-  paymentMethods: { name: string; value: number }[];
-}
-
-export interface PeriodPoint {
-  label: string;
-  receita: number;
-  custo: number;
-  lucro: number;
-}
-
 // ─── Shipment ────────────────────────────────────────────────────────────────
 export interface Shipment {
   id: number;
