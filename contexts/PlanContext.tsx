@@ -27,16 +27,9 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       plan,
       slug,
       isActive,
-      hasPlan: (required: PlanSlug) => {
-        if (user?.role === "admin") return true;
-        if (!slug || !isActive) return false;
-        return PLAN_RANK[slug] >= PLAN_RANK[required];
-      },
-      hasFeature: (feature: keyof Plan) => {
-        if (user?.role === "admin") return true;
-        if (!plan || !isActive) return false;
-        return !!plan[feature];
-      },
+      // Sistema de planos pagos desativado — todos os clientes têm acesso completo.
+hasPlan: (required: PlanSlug) => true,
+hasFeature: (feature: keyof Plan) => true,
     };
   }, [user]);
 
