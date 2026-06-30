@@ -140,18 +140,6 @@ export function Sidebar({ open, onClose, criticalAlerts = 0 }: SidebarProps) {
           })}
         </nav>
 
-        {/* Plan badge (client only) */}
-        {!isAdmin && planSlug && (
-          <div className="px-3 pb-2">
-            <div className="bg-bg-4 rounded-lg px-3 py-2.5">
-              <div className="text-[10px] text-dim uppercase tracking-widest mb-1">Plano atual</div>
-              <div className="text-[13px] font-bold" style={{ color: "#22c55e" }}>
-                {PLAN_ICONS[planSlug]} {PLAN_LABELS[planSlug]}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* User */}
         <div className="px-3 py-3 border-t border-border flex-shrink-0">
           <div className="flex items-center gap-2.5">
