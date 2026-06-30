@@ -111,7 +111,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a38" />
               <XAxis dataKey="mes" tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
+              <Tooltip {...TOOLTIP_STYLE} formatter={(v: any) => formatCurrency(v)} />
               <Area type="monotone" dataKey="receita" stroke="#22c55e" strokeWidth={2} fill="url(#gRevenue)" name="Receita" />
               {canViewProfit && (
                 <Area type="monotone" dataKey="lucro" stroke="#3b82f6" strokeWidth={2} fill="url(#gProfit)" name="Lucro" />
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a38" />
                 <XAxis dataKey="mes" tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
+                <Tooltip {...TOOLTIP_STYLE} formatter={(v: any) => formatCurrency(v)} />
                 <Bar dataKey="receita" fill="#22c55e" opacity={0.8} radius={[4, 4, 0, 0]} name="Receita" />
               </BarChart>
             </ResponsiveContainer>
