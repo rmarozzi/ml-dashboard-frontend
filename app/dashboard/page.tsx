@@ -5,13 +5,12 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, ShoppingCart, CreditCard, DollarSign } from "lucide-react";
+import { TrendingUp, ShoppingCart, CreditCard, DollarSign, Percent, Package2, MapPin, Store } from "lucide-react";
 import { KPICard } from "@/components/ui/KPICard";
 import { StatusBadge } from "@/components/ui/Badge";
 import { dashboardApi } from "@/lib/api";
 import { usePlan } from "@/contexts/PlanContext";
 import { formatCurrency, formatCurrencyShort } from "@/lib/utils";
-import { DashboardStats } from "@/lib/types";
 
 const TOOLTIP_STYLE = {
   contentStyle: { background: "#1e1e28", border: "1px solid #2a2a38", borderRadius: 8 },
@@ -19,7 +18,7 @@ const TOOLTIP_STYLE = {
 };
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { hasPlan } = usePlan();
   const canViewProfit = hasPlan("prata");
@@ -31,23 +30,52 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const Pct = ({ value, color = "muted" }: { value: number | null; color?: string }) => {
+    if (value == null) return <span className="text-dim">—</span>;
+    return <span className={`text-${color}`}>{value.toFixed(1)}%</span>;
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* ── KPIs ──────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <KPICard
-          label="Receita Bruta"
+          label="Faturamento"
           value={loading ? "—" : formatCurrencyShort(stats?.totalRevenue ?? 0)}
-          sub="+14.2% vs mês anterior"
-          trend="up"
           icon={TrendingUp}
           loading={loading}
         />
+        {canViewProfit && (
+          <KPICard
+            label="CMV"
+            value={loading ? "—" : formatCurrencyShort(stats?.totalCmv ?? 0)}
+            sub={!loading && stats?.totalRevenue > 0 ? `${((stats.totalCmv / stats.totalRevenue) * 100).toFixed(1)}%` : undefined}
+            icon={Package2}
+            color="#ef4444"
+            loading={loading}
+          />
+        )}
+        {canViewProfit && (
+          <KPICard
+            label="Margem de Contribuição"
+            value={loading ? "—" : formatCurrencyShort(stats?.totalProfit ?? 0)}
+            sub={!loading ? `${(stats?.margin ?? 0).toFixed(1)}%` : undefined}
+            icon={Percent}
+            color="#a855f7"
+            loading={loading}
+          />
+        )}
         <KPICard
-          label="Pedidos"
+          label="Pgto. Comissão"
+          value="—"
+          sub="Em breve"
+          icon={DollarSign}
+          color="#eab308"
+          loading={loading}
+        />
+        <KPICard
+          label="Qtde Vendida"
           value={loading ? "—" : (stats?.totalOrders ?? 0).toLocaleString("pt-BR")}
-          sub="+9.8% vs mês anterior"
-          trend="up"
           icon={ShoppingCart}
           color="#3b82f6"
           loading={loading}
@@ -55,38 +83,19 @@ export default function DashboardPage() {
         <KPICard
           label="Ticket Médio"
           value={loading ? "—" : formatCurrencyShort(stats?.avgTicket ?? 0)}
-          sub="+3.8% vs mês anterior"
-          trend="up"
           icon={CreditCard}
-          color="#a855f7"
+          color="#22c55e"
           loading={loading}
         />
-        {canViewProfit ? (
-          <KPICard
-            label="Lucro Líquido"
-            value={loading ? "—" : formatCurrencyShort(stats?.totalProfit ?? 0)}
-            sub="+18.1% vs mês anterior"
-            trend="up"
-            icon={DollarSign}
-            loading={loading}
-          />
-        ) : (
-          <div className="bg-bg-3 border border-dashed border-border rounded-xl p-5 flex flex-col items-center justify-center gap-2 text-center">
-            <DollarSign size={20} className="text-dim" />
-            <p className="text-xs text-dim">Lucro disponível no plano <span className="text-[#9ca3af] font-bold">🥈 Prata+</span></p>
-          </div>
-        )}
       </div>
 
-      {/* Revenue chart */}
+      {/* ── Gráfico de Receita ───────────────────────────────────────────── */}
       <div className="bg-bg-3 border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-syne text-[17px] font-bold text-white">Receita Mensal</h2>
           <span className="text-[11px] text-dim">Últimos 6 meses</span>
         </div>
-        {loading ? (
-          <div className="skeleton h-48 rounded-lg" />
-        ) : (
+        {loading ? <div className="skeleton h-48 rounded-lg" /> : (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={stats?.monthlyData ?? []}>
               <defs>
@@ -102,7 +111,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a38" />
               <XAxis dataKey="mes" tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip {...TOOLTIP_STYLE} formatter={(v: any) => formatCurrency(v)} />
+              <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
               <Area type="monotone" dataKey="receita" stroke="#22c55e" strokeWidth={2} fill="url(#gRevenue)" name="Receita" />
               {canViewProfit && (
                 <Area type="monotone" dataKey="lucro" stroke="#3b82f6" strokeWidth={2} fill="url(#gProfit)" name="Lucro" />
@@ -112,17 +121,15 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Status breakdown + bar chart */}
+      {/* ── Status breakdown + bar chart ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-bg-3 border border-border rounded-xl p-5">
           <h2 className="font-syne text-[15px] font-bold text-white mb-4">Pedidos por Status</h2>
           {loading ? (
-            <div className="space-y-3">
-              {[1,2,3,4].map(i => <div key={i} className="skeleton h-8 rounded" />)}
-            </div>
+            <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="skeleton h-8 rounded" />)}</div>
           ) : (
             <div className="space-y-3">
-              {(stats?.statusBreakdown ?? []).map((s) => {
+              {(stats?.statusBreakdown ?? []).map((s: any) => {
                 const pct = Math.round((s.count / (stats?.totalOrders ?? 1)) * 100);
                 const colors: Record<string, string> = { paid: "#22c55e", shipped: "#3b82f6", cancelled: "#ef4444", pending: "#eab308" };
                 return (
@@ -143,15 +150,13 @@ export default function DashboardPage() {
 
         <div className="bg-bg-3 border border-border rounded-xl p-5">
           <h2 className="font-syne text-[15px] font-bold text-white mb-4">Últimos 6 Meses</h2>
-          {loading ? (
-            <div className="skeleton h-[160px] rounded-lg" />
-          ) : (
+          {loading ? <div className="skeleton h-[160px] rounded-lg" /> : (
             <ResponsiveContainer width="100%" height={160}>
               <BarChart data={stats?.monthlyData ?? []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a38" />
                 <XAxis dataKey="mes" tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fill: "#5a5a78", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip {...TOOLTIP_STYLE} formatter={(v: any) => formatCurrency(v)} />
+                <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
                 <Bar dataKey="receita" fill="#22c55e" opacity={0.8} radius={[4, 4, 0, 0]} name="Receita" />
               </BarChart>
             </ResponsiveContainer>
@@ -159,16 +164,148 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent orders */}
+      {/* ── Venda por Canal ──────────────────────────────────────────────── */}
+      <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+          <Store size={15} className="text-brand" />
+          <h2 className="font-syne text-[15px] font-bold text-white">Venda por Canal</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-border bg-bg-4">
+                {["Canal", "Qtde", "Faturado", "Fat. %", canViewProfit && "CMV", canViewProfit && "CMV %", canViewProfit && "Margem", canViewProfit && "Margem %", "Comissão"]
+                  .filter(Boolean).map((h) => (
+                    <th key={String(h)} className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">{h}</th>
+                  ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={9} className="px-4 py-3"><div className="skeleton h-5 rounded" /></td></tr>
+              ) : (stats?.vendaPorCanal ?? []).map((c: any) => (
+                <tr key={c.canal} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
+                  <td className="px-4 py-3 text-sm font-semibold text-white whitespace-nowrap">{c.canal}</td>
+                  <td className="px-4 py-3 font-mono text-sm text-muted">{c.qtd.toLocaleString("pt-BR")}</td>
+                  <td className="px-4 py-3 font-mono text-sm text-white whitespace-nowrap">{formatCurrency(c.faturado)}</td>
+                  <td className="px-4 py-3 font-mono text-sm"><Pct value={c.faturadoPct} color="muted" /></td>
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm text-red-400 whitespace-nowrap">{c.cmv != null ? formatCurrency(c.cmv) : "—"}</td>}
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm"><Pct value={c.cmvPct} color="red-400" /></td>}
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm text-brand whitespace-nowrap">{c.margem != null ? formatCurrency(c.margem) : "—"}</td>}
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm"><Pct value={c.margemPct} color="brand" /></td>}
+                  <td className="px-4 py-3 text-xs text-dim">—</td>
+                </tr>
+              ))}
+            </tbody>
+            {!loading && stats?.vendaPorCanal?.length > 0 && (
+              <tfoot>
+                <tr className="bg-bg-4 border-t border-border font-semibold">
+                  <td className="px-4 py-3 text-sm text-white">Total Geral</td>
+                  <td className="px-4 py-3 font-mono text-sm text-white">{stats.totalOrders.toLocaleString("pt-BR")}</td>
+                  <td className="px-4 py-3 font-mono text-sm text-white">{formatCurrency(stats.totalRevenue)}</td>
+                  <td className="px-4 py-3 font-mono text-sm text-white">100%</td>
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm text-red-400">{formatCurrency(stats.totalCmv ?? 0)}</td>}
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm text-red-400">{stats.totalRevenue > 0 ? ((stats.totalCmv / stats.totalRevenue) * 100).toFixed(1) : "0"}%</td>}
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm text-brand">{formatCurrency(stats.totalProfit ?? 0)}</td>}
+                  {canViewProfit && <td className="px-4 py-3 font-mono text-sm text-brand">{(stats.margin ?? 0).toFixed(1)}%</td>}
+                  <td className="px-4 py-3 text-xs text-dim">—</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+        <p className="text-[11px] text-dim px-5 py-3 border-t border-border/50">
+          Outros canais de venda (Shopee, Magalu, Amazon) serão adicionados em breve.
+        </p>
+      </div>
+
+      {/* ── Venda por Estado + Venda por Produto (lado a lado em telas grandes) ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+
+        {/* Venda por Estado */}
+        <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+            <MapPin size={15} className="text-brand" />
+            <h2 className="font-syne text-[15px] font-bold text-white">Venda por Estado</h2>
+          </div>
+          <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+            <table className="w-full text-left">
+              <thead className="sticky top-0 bg-bg-4 z-10">
+                <tr className="border-b border-border">
+                  {["UF", "Qtde", "Faturado", "Fat. %", canViewProfit && "Margem %"]
+                    .filter(Boolean).map((h) => (
+                      <th key={String(h)} className="px-4 py-2.5 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">{h}</th>
+                    ))}
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i}><td colSpan={5} className="px-4 py-2.5"><div className="skeleton h-4 rounded" /></td></tr>
+                  ))
+                ) : (stats?.vendaPorEstado ?? []).map((s: any) => (
+                  <tr key={s.uf} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
+                    <td className="px-4 py-2.5 text-sm font-semibold text-white">{s.uf}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted">{s.qtd}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-white whitespace-nowrap">{formatCurrency(s.faturado)}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs"><Pct value={s.faturadoPct} color="muted" /></td>
+                    {canViewProfit && <td className="px-4 py-2.5 font-mono text-xs"><Pct value={s.margemPct} color="brand" /></td>}
+                  </tr>
+                ))}
+                {!loading && (stats?.vendaPorEstado?.length ?? 0) === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-muted text-sm">Nenhum dado de localização disponível</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Venda por Produto */}
+        <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+            <Package2 size={15} className="text-brand" />
+            <h2 className="font-syne text-[15px] font-bold text-white">Venda por Produto</h2>
+          </div>
+          <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+            <table className="w-full text-left">
+              <thead className="sticky top-0 bg-bg-4 z-10">
+                <tr className="border-b border-border">
+                  {["Produto", "Qtde", "Faturado", canViewProfit && "Margem %"]
+                    .filter(Boolean).map((h) => (
+                      <th key={String(h)} className="px-4 py-2.5 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">{h}</th>
+                    ))}
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i}><td colSpan={4} className="px-4 py-2.5"><div className="skeleton h-4 rounded" /></td></tr>
+                  ))
+                ) : (stats?.vendaPorProduto ?? []).map((p: any) => (
+                  <tr key={p.sku + p.name} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
+                    <td className="px-4 py-2.5 text-sm text-white max-w-[200px] truncate" title={p.name}>{p.name}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted">{p.qtd}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-white whitespace-nowrap">{formatCurrency(p.faturado)}</td>
+                    {canViewProfit && <td className="px-4 py-2.5 font-mono text-xs"><Pct value={p.margemPct} color="brand" /></td>}
+                  </tr>
+                ))}
+                {!loading && (stats?.vendaPorProduto?.length ?? 0) === 0 && (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-muted text-sm">Nenhum produto vendido ainda</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Pedidos Recentes ─────────────────────────────────────────────── */}
       <div className="bg-bg-3 border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-syne text-[15px] font-bold text-white">Pedidos Recentes</h2>
           <a href="/dashboard/orders" className="text-xs text-brand hover:underline">Ver todos →</a>
         </div>
         {loading ? (
-          <div className="space-y-3">
-            {[1,2,3,4,5].map(i => <div key={i} className="skeleton h-10 rounded" />)}
-          </div>
+          <div className="space-y-3">{[1,2,3,4,5].map(i => <div key={i} className="skeleton h-10 rounded" />)}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -182,9 +319,9 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {(stats?.recentOrders ?? []).map((order) => (
+                {(stats?.recentOrders ?? []).map((order: any) => (
                   <tr key={order.id} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
-                    <td className="py-3 pr-4 font-mono text-xs text-muted">{order.mlId}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-muted">{order.packId || order.mlId}</td>
                     <td className="py-3 pr-4 text-sm text-white max-w-[180px] truncate">
                       {order.items?.[0]?.title ?? "—"}
                     </td>
