@@ -20,15 +20,19 @@ const TOOLTIP_STYLE = {
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [brandFilter, setBrandFilter] = useState("");
   const { hasPlan } = usePlan();
   const canViewProfit = hasPlan("prata");
 
   useEffect(() => {
-    dashboardApi.stats()
+    setLoading(true);
+    const params: Record<string, string> = {};
+    if (brandFilter) params.brand = brandFilter;
+    dashboardApi.stats(params)
       .then(({ data }) => setStats(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [brandFilter]);
 
   const Pct = ({ value, color = "muted" }: { value: number | null; color?: string }) => {
     if (value == null) return <span className="text-dim">—</span>;
@@ -37,6 +41,31 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+
+      {/* ── Filtro de Marca ──────────────────────────────────────────────── */}
+      {!loading && (stats?.availableBrands?.length ?? 0) > 0 && (
+        <div className="flex items-center gap-2">
+          <select
+            value={brandFilter}
+            onChange={(e) => setBrandFilter(e.target.value)}
+            className="bg-bg-3 border border-border rounded-lg px-3 py-2 text-sm text-muted outline-none cursor-pointer max-w-xs"
+          >
+            <option value="">Todas as marcas</option>
+            {stats.availableBrands.map((b: string) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+          {brandFilter && (
+            <button
+              onClick={() => setBrandFilter("")}
+              className="text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              Limpar filtro
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ── KPIs ──────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <KPICard
@@ -219,10 +248,9 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* ── Venda por Estado + Venda por Produto (lado a lado em telas grandes) ── */}
+      {/* ── Venda por Estado + Venda por Produto ────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
-        {/* Venda por Estado */}
         <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
             <MapPin size={15} className="text-brand" />
@@ -260,7 +288,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Venda por Produto */}
         <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
             <Package2 size={15} className="text-brand" />

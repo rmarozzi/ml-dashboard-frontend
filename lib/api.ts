@@ -30,7 +30,7 @@ export const authApi = {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export const dashboardApi = {
-  stats: () => api.get("/dashboard/stats"),
+  stats: (params?: Record<string, string>) => api.get("/dashboard/stats", { params }),
   syncStatus: () => api.get("/sync/status"),
   sync: () => api.get("/orders/sync"),
 };
