@@ -233,8 +233,15 @@ export default function OrdersPage() {
                 <ColHeader field="totalAmount" label="Receita" />
                 {canViewProfit && <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">Lucro</th>}
                 {canViewProfit && <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">Margem</th>}
-                <ColHeader field="dateCreated" label="Data" />
-                <ColHeader field="status" label="Status" />
+<th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">
+  <button onClick={() => handleSort("dateCreated")} className="flex items-center gap-1 hover:text-white transition-colors">
+    Data da Venda
+    <SortIcon field="dateCreated" />
+  </button>
+</th>
+<th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest whitespace-nowrap">
+  Data de Liberação
+</th>                <ColHeader field="status" label="Status" />
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -345,8 +352,20 @@ router.push(`/dashboard/costs?${params.toString()}`);
                           )}
 
                           <td className="px-4 py-3 text-xs text-dim whitespace-nowrap">
-                            {formatDateTime(order.dateCreated)}
-                          </td>
+  {formatDateTime(order.dateCreated)}
+</td>
+<td className="px-4 py-3 text-xs whitespace-nowrap">
+  {(() => {
+    const releaseDate = order.payments?.find((p: any) => p.moneyReleaseDate)?.moneyReleaseDate;
+    if (!releaseDate) return <span className="text-dim">—</span>;
+    const isFuture = new Date(releaseDate) > new Date();
+    return (
+      <span className={isFuture ? "text-yellow-400" : "text-brand"}>
+        {formatDateTime(releaseDate)}
+      </span>
+    );
+  })()}
+</td>
 
                           <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
 

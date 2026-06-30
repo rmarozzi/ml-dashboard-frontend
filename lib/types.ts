@@ -75,6 +75,7 @@ export interface Order {
   tokenId: number;
   token?: { apelido: string | null; mlNickname: string | null };
   items?: OrderItem[];
+  payments?: Payment[];
   profit?: number | null;
   margin?: number | null;
 }
@@ -85,6 +86,17 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   sku: string | null;
+}
+
+export interface Payment {
+  id: number;
+  mlPaymentId: string | null;
+  status: string;
+  totalPaidAmount: number;
+  taxesAmount: number;
+  operationType: string;
+  paymentMethodId: string | null;
+  moneyReleaseDate: string | null;
 }
 
 // ─── Employees ───────────────────────────────────────────────────────────────
