@@ -4,19 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Input, Select } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Toggle } from "@/components/ui/Toggle";
 import { adminApi } from "@/lib/api";
 
 export default function NewClientPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [isTrial, setIsTrial] = useState(false);
   const [form, setForm] = useState({
-    name: "", email: "", password: "", planSlug: "bronze",
-    trialDays: "14", adminNotes: "", sendEmail: false,
+    name: "", email: "", password: "", adminNotes: "", sendEmail: false,
   });
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }));
@@ -28,8 +25,7 @@ export default function NewClientPage() {
     try {
       const { data } = await adminApi.createClient({
         name: form.name, email: form.email, password: form.password,
-        planSlug: form.planSlug,
-        trial: isTrial, trialDays: isTrial ? Number(form.trialDays) : undefined,
+        planSlug: "premium", // sistema de planos desativado — todo cliente tem acesso completo
         adminNotes: form.adminNotes || undefined,
         sendEmail: form.sendEmail,
       });
@@ -55,30 +51,10 @@ export default function NewClientPage() {
           </div>
           <Input label="Senha inicial *" type="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={(e) => set("password", e.target.value)} />
 
-          <Select label="Plano" value={form.planSlug} onChange={(e) => set("planSlug", e.target.value)}>
-            <option value="bronze">🥉 Bronze — R$ 97/mês</option>
-            <option value="prata">🥈 Prata — R$ 197/mês</option>
-            <option value="ouro">🥇 Ouro — R$ 397/mês</option>
-            <option value="premium">💎 Premium — R$ 897/mês</option>
-          </Select>
-
-          <div className="flex items-center justify-between py-3 border-t border-border">
-            <div>
-              <p className="text-sm font-semibold text-white">Período de Trial</p>
-              <p className="text-xs text-dim">Acesso gratuito por N dias antes de cobrar</p>
-            </div>
-            <Toggle active={isTrial} onToggle={() => setIsTrial((p) => !p)} />
-          </div>
-
-          {isTrial && (
-            <Input label="Duração do trial (dias)" type="number" min="1" max="90" value={form.trialDays}
-              onChange={(e) => set("trialDays", e.target.value)} />
-          )}
-
           <div className="border-t border-border pt-4">
             <label className="text-xs font-medium text-muted block mb-1.5">Observação interna (visível só para admins)</label>
             <textarea value={form.adminNotes} onChange={(e) => set("adminNotes", e.target.value)}
-              placeholder="Ex: cliente indicado por parceiro X, negociação especial..."
+              placeholder="Ex: cliente indicado por parceiro X, observações gerais..."
               className="w-full bg-bg-4 border border-border rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-dim outline-none focus:border-brand/50 resize-none min-h-[80px]" />
           </div>
 
