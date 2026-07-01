@@ -20,7 +20,8 @@ const TOOLTIP_STYLE = {
 export default function DashboardPage() {
 const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [brandFilter, setBrandFilter] = useState<string[]>([]);
+const [brandFilter, setBrandFilter] = useState<string[]>([]); // aplicado (dispara fetch)
+  const [brandDraft, setBrandDraft] = useState<string[]>([]);   // rascunho (enquanto o dropdown está aberto)
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
@@ -40,20 +41,30 @@ const [stats, setStats] = useState<any>(null);
       .finally(() => setLoading(false));
   }, [brandFilter, dateFrom, dateTo]);
 
-  useEffect(() => {
+useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
         setBrandDropdownOpen(false);
+        setBrandDraft(brandFilter); // fechou sem confirmar -> descarta o rascunho
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [brandFilter]);
 
-  const toggleBrand = (b: string) => {
-    setBrandFilter((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
+  const toggleBrandDraft = (b: string) => {
+    setBrandDraft((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
   };
 
+  const openBrandDropdown = () => {
+    setBrandDraft(brandFilter); // começa o rascunho a partir do que está aplicado
+    setBrandDropdownOpen((v) => !v);
+  };
+
+  const applyBrandFilter = () => {
+    setBrandFilter(brandDraft);
+    setBrandDropdownOpen(false);
+  };
   const Pct = ({ value, color = "muted" }: { value: number | null; color?: string }) => {
     if (value == null) return <span className="text-dim">—</span>;
     return <span className={`text-${color}`}>{value.toFixed(1)}%</span>;
@@ -67,7 +78,7 @@ const [stats, setStats] = useState<any>(null);
         {!loading && (stats?.availableBrands?.length ?? 0) > 0 && (
           <div className="relative" ref={brandDropdownRef}>
             <button
-              onClick={() => setBrandDropdownOpen((v) => !v)}
+              onClick={openBrandDropdown}
               className="flex items-center gap-2 bg-bg-3 border border-border rounded-lg px-3 py-2 text-sm text-muted hover:text-white transition-colors max-w-xs"
             >
               <span className="truncate">
@@ -80,21 +91,37 @@ const [stats, setStats] = useState<any>(null);
               <ChevronDown size={14} className={`shrink-0 transition-transform ${brandDropdownOpen ? "rotate-180" : ""}`} />
             </button>
             {brandDropdownOpen && (
-              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-bg-3 border border-border rounded-lg shadow-lg py-1">
-                {stats.availableBrands.map((b: string) => (
-                  <label
-                    key={b}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-muted hover:bg-bg-4 cursor-pointer"
+              <div className="absolute z-20 mt-1 w-56 bg-bg-3 border border-border rounded-lg shadow-lg py-1">
+                <div className="max-h-64 overflow-y-auto">
+                  {stats.availableBrands.map((b: string) => (
+                    <label
+                      key={b}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-muted hover:bg-bg-4 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={brandDraft.includes(b)}
+                        onChange={() => toggleBrandDraft(b)}
+                        className="accent-brand"
+                      />
+                      <span>{b}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border">
+                  <button
+                    onClick={() => setBrandDraft([])}
+                    className="text-xs text-dim hover:text-white transition-colors"
                   >
-                    <input
-                      type="checkbox"
-                      checked={brandFilter.includes(b)}
-                      onChange={() => toggleBrand(b)}
-                      className="accent-brand"
-                    />
-                    <span>{b}</span>
-                  </label>
-                ))}
+                    Limpar
+                  </button>
+                  <button
+                    onClick={applyBrandFilter}
+                    className="text-xs font-semibold text-white bg-brand hover:opacity-90 rounded px-3 py-1.5 transition-opacity"
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             )}
           </div>
