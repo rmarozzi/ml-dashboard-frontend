@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, ShoppingCart, CreditCard, DollarSign, Percent, Package2, MapPin, Store } from "lucide-react";
+import { TrendingUp, ShoppingCart, CreditCard, DollarSign, Percent, Package2, MapPin, Store, ChevronDown, Calendar } from "lucide-react";
 import { KPICard } from "@/components/ui/KPICard";
 import { StatusBadge } from "@/components/ui/Badge";
 import { dashboardApi } from "@/lib/api";
@@ -18,21 +18,41 @@ const TOOLTIP_STYLE = {
 };
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<any>(null);
+const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [brandFilter, setBrandFilter] = useState("");
+  const [brandFilter, setBrandFilter] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const brandDropdownRef = useRef<HTMLDivElement>(null);
   const { hasPlan } = usePlan();
   const canViewProfit = hasPlan("prata");
 
   useEffect(() => {
     setLoading(true);
     const params: Record<string, string> = {};
-    if (brandFilter) params.brand = brandFilter;
+    if (brandFilter.length > 0) params.brand = brandFilter.join(",");
+    if (dateFrom) params.dateFrom = dateFrom;
+    if (dateTo) params.dateTo = dateTo;
     dashboardApi.stats(params)
       .then(({ data }) => setStats(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [brandFilter]);
+  }, [brandFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (brandDropdownRef.current && !brandDropdownRef.current.contains(e.target as Node)) {
+        setBrandDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleBrand = (b: string) => {
+    setBrandFilter((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
+  };
 
   const Pct = ({ value, color = "muted" }: { value: number | null; color?: string }) => {
     if (value == null) return <span className="text-dim">—</span>;
@@ -42,29 +62,85 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── Filtro de Marca ──────────────────────────────────────────────── */}
-      {!loading && (stats?.availableBrands?.length ?? 0) > 0 && (
-        <div className="flex items-center gap-2">
-          <select
-            value={brandFilter}
-            onChange={(e) => setBrandFilter(e.target.value)}
-            className="bg-bg-3 border border-border rounded-lg px-3 py-2 text-sm text-muted outline-none cursor-pointer max-w-xs"
-          >
-            <option value="">Todas as marcas</option>
-            {stats.availableBrands.map((b: string) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-          {brandFilter && (
+{/* ── Filtros ──────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-3">
+        {!loading && (stats?.availableBrands?.length ?? 0) > 0 && (
+          <div className="relative" ref={brandDropdownRef}>
             <button
-              onClick={() => setBrandFilter("")}
-              className="text-xs text-red-400 hover:text-red-300 transition-colors"
+              onClick={() => setBrandDropdownOpen((v) => !v)}
+              className="flex items-center gap-2 bg-bg-3 border border-border rounded-lg px-3 py-2 text-sm text-muted hover:text-white transition-colors max-w-xs"
             >
-              Limpar filtro
+              <span className="truncate">
+                {brandFilter.length === 0
+                  ? "Todas as marcas"
+                  : brandFilter.length === 1
+                  ? brandFilter[0]
+                  : `${brandFilter.length} marcas selecionadas`}
+              </span>
+              <ChevronDown size={14} className={`shrink-0 transition-transform ${brandDropdownOpen ? "rotate-180" : ""}`} />
             </button>
-          )}
+            {brandDropdownOpen && (
+              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-bg-3 border border-border rounded-lg shadow-lg py-1">
+                {stats.availableBrands.map((b: string) => (
+                  <label
+                    key={b}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-muted hover:bg-bg-4 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={brandFilter.includes(b)}
+                      onChange={() => toggleBrand(b)}
+                      className="accent-brand"
+                    />
+                    <span>{b}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 bg-bg-3 border border-border rounded-lg px-3 py-1.5">
+          <Calendar size={14} className="text-dim shrink-0" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="bg-transparent text-sm text-muted outline-none"
+          />
+          <span className="text-dim text-xs">até</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="bg-transparent text-sm text-muted outline-none"
+          />
         </div>
-      )}
+
+        <button
+          onClick={() => {
+            const today = new Date().toISOString().slice(0, 10);
+            setDateFrom(today);
+            setDateTo(today);
+          }}
+          className="text-xs text-brand hover:underline"
+        >
+          Hoje
+        </button>
+
+        {(brandFilter.length > 0 || dateFrom || dateTo) && (
+          <button
+            onClick={() => {
+              setBrandFilter([]);
+              setDateFrom("");
+              setDateTo("");
+            }}
+            className="text-xs text-red-400 hover:text-red-300 transition-colors"
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
 
       {/* ── KPIs ──────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
