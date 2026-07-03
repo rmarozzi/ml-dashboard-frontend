@@ -5,8 +5,8 @@ import { PlanProvider } from "@/contexts/PlanContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 
 export const metadata: Metadata = {
-  title: "ML Dash — Dashboard para vendedores do Mercado Livre",
-  description: "Gerencie seus pedidos, calcule lucro real e analise seu desempenho no Mercado Livre.",
+  title: "Vendix — Vendas de todos os canais, um painel",
+  description: "Gerencie pedidos, calcule lucro real e analise seu desempenho em todos os canais de venda, em um painel só.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

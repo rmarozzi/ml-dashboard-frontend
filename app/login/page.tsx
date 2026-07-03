@@ -59,13 +59,23 @@ const handleSubmit = async (e: React.FormEvent) => {
       <div className="w-full max-w-sm animate-fade-up relative">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center mb-4">
-            <Zap size={22} className="text-black" />
-          </div>
-          <h1 className="font-syne text-2xl font-extrabold text-white">ML Dash</h1>
-          <p className="text-muted text-sm mt-1">Dashboard para vendedores do Mercado Livre</p>
+          <svg width="48" height="48" viewBox="0 0 48 48" className="mb-4">
+            <defs>
+              <linearGradient id="vendixGradLogin" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#16a34a" />
+                <stop offset="100%" stopColor="#4ade80" />
+              </linearGradient>
+            </defs>
+            <rect x="6" y="29" width="6" height="11" rx="1.5" fill="url(#vendixGradLogin)" />
+            <rect x="15" y="23" width="6" height="17" rx="1.5" fill="url(#vendixGradLogin)" />
+            <rect x="24" y="15" width="6" height="25" rx="1.5" fill="url(#vendixGradLogin)" />
+            <path d="M3 36 L36 12" stroke="url(#vendixGradLogin)" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+            <path d="M36 12 L28 15" stroke="url(#vendixGradLogin)" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+            <path d="M36 12 L33 22" stroke="url(#vendixGradLogin)" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+          </svg>
+          <h1 className="font-syne text-2xl font-extrabold text-white">Vendix</h1>
+          <p className="text-muted text-sm mt-1">Vendas de todos os canais, um painel</p>
         </div>
-
         {/* Card */}
         <div className="bg-bg-3 border border-border rounded-2xl p-8">
           <h2 className="font-syne text-lg font-bold text-white mb-6">Entrar na sua conta</h2>

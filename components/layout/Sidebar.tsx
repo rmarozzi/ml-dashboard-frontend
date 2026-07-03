@@ -91,12 +91,23 @@ export function Sidebar({ open, onClose, criticalAlerts = 0 }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-border flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center flex-shrink-0">
-            <Zap size={15} className="text-black" />
-          </div>
+          <svg width="32" height="32" viewBox="0 0 32 32" className="flex-shrink-0">
+            <defs>
+              <linearGradient id="vendixGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#16a34a" />
+                <stop offset="100%" stopColor="#4ade80" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="19" width="4" height="7" rx="1" fill="url(#vendixGrad)" />
+            <rect x="10" y="15" width="4" height="11" rx="1" fill="url(#vendixGrad)" />
+            <rect x="16" y="10" width="4" height="16" rx="1" fill="url(#vendixGrad)" />
+            <path d="M2 24 L24 8" stroke="url(#vendixGrad)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+            <path d="M24 8 L19 10" stroke="url(#vendixGrad)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+            <path d="M24 8 L22 15" stroke="url(#vendixGrad)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+          </svg>
           <div>
             <div className="font-syne text-[15px] font-extrabold text-white leading-none">
-              ML Dash
+              Vendix
             </div>
             {isAdmin && (
               <div className="text-[9px] font-bold text-red-400 tracking-widest uppercase mt-0.5">
