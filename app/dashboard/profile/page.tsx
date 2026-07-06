@@ -133,7 +133,7 @@ export default function ProfilePage() {
           <div>
             <h2 className="font-syne text-[15px] font-bold text-white">Contas Mercado Livre</h2>
             <p className="text-xs text-dim mt-0.5">
-              {accounts.filter(a => a.channelType === "MERCADO_LIVRE").length} conta(s) conectada(s)
+              {accounts.length} conta(s) conectada(s)
             </p>
           </div>
           <Button variant="secondary" size="sm" onClick={handleConnectML}>
@@ -142,12 +142,12 @@ export default function ProfilePage() {
         </div>
         {loading ? (
           <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <div key={i} className="skeleton h-16 rounded-lg" />)}</div>
-        ) : accounts.filter(a => a.channelType === "MERCADO_LIVRE").length === 0 ? (
+        ) : accounts.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted text-sm mb-3">Nenhuma conta conectada</p>
             <Button variant="primary" size="sm" onClick={handleConnectML}><Plus size={13} /> Conectar Mercado Livre</Button>
           </div>
-        ) : accounts.filter(a => a.channelType === "MERCADO_LIVRE").map((a) => (
+        ) : accounts.map((a) => (
           <div key={a.id} className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 mb-2">
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${a.isExpired ? "bg-red-500" : a.isExpiringSoon ? "bg-yellow-500" : "bg-brand"}`} />
             <div className="flex-1 min-w-0">
