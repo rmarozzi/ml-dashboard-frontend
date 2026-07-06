@@ -4,21 +4,19 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, RefreshCw, AlertTriangle, CheckCircle, Percent, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { StatusBadge } from "@/components/ui/Badge";
-import { PlanBadge } from "@/components/ui/PlanBadge";
 import { Modal } from "@/components/ui/Modal";
 import { authApi, mlApi, subscriptionApi, taxRateApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
-import { formatDate, formatCurrency } from "@/lib/utils";
-import { MlToken, Subscription, TaxSetting } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
+import { ChannelAccount, Subscription, TaxSetting } from "@/lib/types";
 
 export default function ProfilePage() {
-  const { user, refresh } = useAuth();
-  const { slug: planSlug, hasPlan } = usePlan();
+  const { user } = useAuth();
+  const { hasPlan } = usePlan();
   const { can, isFuncionario } = usePermissions();
-  const [tokens, setTokens] = useState<MlToken[]>([]);
+  const [accounts, setAccounts] = useState<ChannelAccount[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
@@ -26,7 +24,6 @@ export default function ProfilePage() {
   const [pwSuccess, setPwSuccess] = useState(false);
   const [savingPw, setSavingPw] = useState(false);
 
-  // Alíquota de imposto
   const [taxCurrent, setTaxCurrent] = useState<TaxSetting | null>(null);
   const [taxHistory, setTaxHistory] = useState<TaxSetting[]>([]);
   const [taxLoading, setTaxLoading] = useState(true);
@@ -41,7 +38,7 @@ export default function ProfilePage() {
   useEffect(() => {
     Promise.all([mlApi.status(), subscriptionApi.get()])
       .then(([mlRes, subRes]) => {
-        setTokens(mlRes.data.tokens ?? []);
+        setAccounts(mlRes.data.accounts ?? []);
         setSubscription(subRes.data.subscription);
       })
       .catch(() => {})
@@ -59,10 +56,10 @@ export default function ProfilePage() {
       .finally(() => setTaxLoading(false));
   }, [hasPlan]);
 
-  const handleDisconnect = async (tokenId: number) => {
+  const handleDisconnect = async (accountId: string) => {
     if (!confirm("Desconectar esta conta do Mercado Livre?")) return;
-    await mlApi.disconnect(tokenId).catch(() => {});
-    setTokens((p) => p.filter((t) => t.id !== tokenId));
+    await mlApi.disconnect(accountId).catch(() => {});
+    setAccounts((p) => p.filter((a) => a.id !== accountId));
   };
 
   const handleConnectML = async () => {
@@ -95,7 +92,7 @@ export default function ProfilePage() {
     try {
       const { data } = await taxRateApi.create({
         rate: Number(taxForm.rate),
-        validFrom: taxCurrent ? taxForm.validFrom : undefined, // primeira cadastro é sempre retroativa
+        validFrom: taxCurrent ? taxForm.validFrom : undefined,
       });
       setTaxCurrent(data.setting);
       setTaxHistory((prev) => [data.setting, ...prev]);
@@ -135,7 +132,9 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="font-syne text-[15px] font-bold text-white">Contas Mercado Livre</h2>
-            <p className="text-xs text-dim mt-0.5">{tokens.length} conta{tokens.length !== 1 ? "s" : ""} conectada{tokens.length !== 1 ? "s" : ""}</p>
+            <p className="text-xs text-dim mt-0.5">
+              {accounts.filter(a => a.channelType === "MERCADO_LIVRE").length} conta(s) conectada(s)
+            </p>
           </div>
           <Button variant="secondary" size="sm" onClick={handleConnectML}>
             <Plus size={13} /> Conectar conta
@@ -143,35 +142,37 @@ export default function ProfilePage() {
         </div>
         {loading ? (
           <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <div key={i} className="skeleton h-16 rounded-lg" />)}</div>
-        ) : tokens.length === 0 ? (
+        ) : accounts.filter(a => a.channelType === "MERCADO_LIVRE").length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted text-sm mb-3">Nenhuma conta conectada</p>
             <Button variant="primary" size="sm" onClick={handleConnectML}><Plus size={13} /> Conectar Mercado Livre</Button>
           </div>
-        ) : tokens.map((t) => (
-          <div key={t.id} className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 mb-2">
-            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${t.isExpired ? "bg-red-500" : t.isExpiringSoon ? "bg-yellow-500" : "bg-brand"}`} />
+        ) : accounts.filter(a => a.channelType === "MERCADO_LIVRE").map((a) => (
+          <div key={a.id} className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 mb-2">
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${a.isExpired ? "bg-red-500" : a.isExpiringSoon ? "bg-yellow-500" : "bg-brand"}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">{t.apelido ?? t.mlNickname ?? `Conta #${t.id}`}</p>
+              <p className="text-sm font-semibold text-white">
+                {a.apelido ?? a.externalNickname ?? `Conta #${a.externalAccountId}`}
+              </p>
               <p className="text-xs text-dim">
-                {t.isExpired ? "Token expirado" : t.isExpiringSoon ? "Expira em breve" : `Expira em ${formatDate(t.expiresAt)}`}
-                {t.mlNickname && ` · @${t.mlNickname}`}
+                {a.isExpired ? "Token expirado" : a.isExpiringSoon ? "Expira em breve" : `Expira em ${formatDate(a.tokenExpiresAt)}`}
+                {a.externalNickname && ` · @${a.externalNickname}`}
+                {!a.initialSyncDone && " · Sincronizando..."}
               </p>
             </div>
-            {t.isExpired && (
+            {a.isExpired && (
               <Button variant="secondary" size="sm" onClick={handleConnectML}>
                 <RefreshCw size={12} /> Reconectar
               </Button>
             )}
-            <button onClick={() => handleDisconnect(t.id)} className="text-dim hover:text-red-400 transition-colors p-1">
+            <button onClick={() => handleDisconnect(a.id)} className="text-dim hover:text-red-400 transition-colors p-1">
               <Trash2 size={14} />
             </button>
           </div>
         ))}
       </div>
 
-
-      {/* Alíquota de Imposto NF (global) */}
+      {/* Alíquota de Imposto NF */}
       {hasPlan("prata") && (
         <div className="bg-bg-3 border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-2">
@@ -185,7 +186,6 @@ export default function ProfilePage() {
               </Button>
             )}
           </div>
-
           {taxLoading ? (
             <div className="skeleton h-16 rounded-lg mt-4" />
           ) : taxCurrent ? (
@@ -206,7 +206,7 @@ export default function ProfilePage() {
               </div>
               {showTaxHistory && taxHistory.length > 1 && (
                 <div className="border-t border-border/50 mt-2 pt-3">
-                  <p className="text-[10px] text-dim uppercase tracking-widest mb-2">Histórico de alterações</p>
+                  <p className="text-[10px] text-dim uppercase tracking-widest mb-2">Histórico</p>
                   <div className="space-y-1.5">
                     {taxHistory.slice(1).map((h) => (
                       <div key={h.id} className="flex justify-between text-xs">
@@ -231,15 +231,15 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Change password */}
+      {/* Alterar Senha */}
       <div className="bg-bg-3 border border-border rounded-xl p-6">
         <h2 className="font-syne text-[15px] font-bold text-white mb-5">Alterar Senha</h2>
         <div className="flex flex-col gap-4">
-          <Input label="Senha atual" type="password" placeholder="••••••••" value={pwForm.current}
+          <Input label="Senha atual" type="password" placeholder="········" value={pwForm.current}
             onChange={(e) => setPwForm((p) => ({ ...p, current: e.target.value }))} />
-          <Input label="Nova senha" type="password" placeholder="••••••••" value={pwForm.next}
+          <Input label="Nova senha" type="password" placeholder="········" value={pwForm.next}
             onChange={(e) => setPwForm((p) => ({ ...p, next: e.target.value }))} />
-          <Input label="Confirmar nova senha" type="password" placeholder="••••••••" value={pwForm.confirm}
+          <Input label="Confirmar nova senha" type="password" placeholder="········" value={pwForm.confirm}
             onChange={(e) => setPwForm((p) => ({ ...p, confirm: e.target.value }))} />
           {pwError && (
             <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
@@ -255,44 +255,25 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Modal: configurar/alterar alíquota */}
+      {/* Modal alíquota */}
       <Modal open={showTaxModal} onClose={() => setShowTaxModal(false)} title={taxCurrent ? "Alterar Alíquota" : "Configurar Alíquota"} className="max-w-sm">
         <div className="flex flex-col gap-4">
-          <Input
-            label="Alíquota de Imposto NF (%)"
-            type="number"
-            placeholder="9.0"
-            min="0"
-            max="100"
-            step="0.1"
-            value={taxForm.rate}
-            onChange={(e) => setTaxForm((p) => ({ ...p, rate: e.target.value }))}
-          />
-
+          <Input label="Alíquota de Imposto NF (%)" type="number" placeholder="9.0" min="0" max="100" step="0.1"
+            value={taxForm.rate} onChange={(e) => setTaxForm((p) => ({ ...p, rate: e.target.value }))} />
           {taxCurrent ? (
             <>
-              <Input
-                label="Vigente a partir de"
-                type="date"
-                value={taxForm.validFrom}
-                onChange={(e) => setTaxForm((p) => ({ ...p, validFrom: e.target.value }))}
-              />
-              <p className="text-xs text-dim -mt-1">
-                Vendas anteriores a esta data continuam usando a alíquota de {taxCurrent.rate}%.
-              </p>
+              <Input label="Vigente a partir de" type="date" value={taxForm.validFrom}
+                onChange={(e) => setTaxForm((p) => ({ ...p, validFrom: e.target.value }))} />
+              <p className="text-xs text-dim -mt-1">Vendas anteriores continuam usando {taxCurrent.rate}%.</p>
             </>
           ) : (
-            <p className="text-xs text-dim -mt-1">
-              Esta será a primeira alíquota cadastrada — vale para todas as vendas, incluindo as anteriores a hoje.
-            </p>
+            <p className="text-xs text-dim -mt-1">Será aplicada a todas as vendas, incluindo anteriores.</p>
           )}
-
           {taxError && (
             <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
               <AlertTriangle size={13} /> {taxError}
             </div>
           )}
-
           <div className="flex gap-2 pt-2">
             <Button variant="secondary" className="flex-1" onClick={() => setShowTaxModal(false)}>Cancelar</Button>
             <Button variant="primary" className="flex-1" loading={taxSaving} onClick={handleSaveTaxRate}>Salvar</Button>

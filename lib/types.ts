@@ -55,7 +55,20 @@ export interface MlToken {
   isExpired: boolean;
   isExpiringSoon: boolean;
 }
-
+// ─── Channel Account (novo motor multi-canal) ─────────────────────────────────
+export interface ChannelAccount {
+  id: string;
+  channelType: "MERCADO_LIVRE" | "SHOPEE";
+  externalAccountId: string;
+  externalNickname: string | null;
+  apelido: string | null;
+  initialSyncDone: boolean;
+  lastSyncAt: string | null;
+  tokenExpiresAt: string;
+  createdAt: string;
+  isExpired: boolean;
+  isExpiringSoon: boolean;
+}
 // ─── Orders ──────────────────────────────────────────────────────────────────
 export type OrderStatus = "paid" | "pending" | "cancelled" | "shipped";
 
