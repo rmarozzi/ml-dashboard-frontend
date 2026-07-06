@@ -78,7 +78,7 @@ export const employeesApi = {
 // ─── ML ──────────────────────────────────────────────────────────────────────
 export const mlApi = {
   status: () => api.get("/ml/status"),
-  disconnect: (tokenId: number) => api.delete(`/ml/disconnect/${tokenId}`),
+  disconnect: (accountId: string) => api.delete(`/ml/disconnect/${accountId}`),
 };
 
 // ─── Subscription ─────────────────────────────────────────────────────────────
