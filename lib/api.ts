@@ -10,7 +10,6 @@ const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // Não redireciona automaticamente — deixa cada página tratar o 401
     return Promise.reject(err);
   }
 );
@@ -35,18 +34,18 @@ export const dashboardApi = {
   sync: () => api.get("/orders/sync"),
 };
 
-// ─── Orders ──────────────────────────────────────────────────────────────────
+// ─── Orders ───────────────────────────────────────────────────────────────────
 export const ordersApi = {
   list: (params?: Record<string, string>) => api.get("/orders", { params }),
   profit: (params?: Record<string, string>) => api.get("/profit/orders", { params }),
 };
 
-// ─── Shipments ───────────────────────────────────────────────────────────────
+// ─── Shipments ────────────────────────────────────────────────────────────────
 export const shipmentsApi = {
   list: (params?: Record<string, string>) => api.get("/shipments", { params }),
 };
 
-// ─── Costs ───────────────────────────────────────────────────────────────────
+// ─── Costs ────────────────────────────────────────────────────────────────────
 export const costsApi = {
   list: () => api.get("/costs"),
   create: (data: { sku: string; name: string; cost: number; ean?: string; ncm?: string; cest?: string; codFabricante?: string; marca?: string }) =>
@@ -57,12 +56,13 @@ export const costsApi = {
   delete: (id: number) => api.delete(`/costs/${id}`),
 };
 
+// ─── Tax Rate ─────────────────────────────────────────────────────────────────
 export const taxRateApi = {
   get: () => api.get("/settings/tax-rate"),
   create: (data: { rate: number; validFrom?: string }) => api.post("/settings/tax-rate", data),
 };
 
-// ─── Employees ───────────────────────────────────────────────────────────────
+// ─── Employees ────────────────────────────────────────────────────────────────
 export const employeesApi = {
   list: () => api.get("/employees"),
   create: (data: { name: string; email: string; password: string }) =>
@@ -75,22 +75,29 @@ export const employeesApi = {
   delete: (id: number) => api.delete(`/employees/${id}`),
 };
 
+// ─── Channels (ML + Shopee unificado) ─────────────────────────────────────────
 export const channelsApi = {
   status: () => api.get("/channels/status"),
   disconnect: (accountId: string) => api.delete(`/channels/disconnect/${accountId}`),
 };
 
+// ─── Shopee ───────────────────────────────────────────────────────────────────
 export const shopeeApi = {
   connect: () => api.get("/shopee/connect"),
 };
 
-// mantém mlApi por compatibilidade com outros componentes que ainda o usam
+// ─── ML (mantido por compatibilidade) ─────────────────────────────────────────
 export const mlApi = {
   status: () => channelsApi.status(),
   disconnect: (accountId: string) => channelsApi.disconnect(accountId),
 };
 
-// ─── Export ──────────────────────────────────────────────────────────────────
+// ─── Subscription ─────────────────────────────────────────────────────────────
+export const subscriptionApi = {
+  get: () => api.get("/subscription"),
+};
+
+// ─── Export ───────────────────────────────────────────────────────────────────
 export const exportApi = {
   orders: (params?: Record<string, string>) =>
     api.get("/export/orders", { params, responseType: "blob" }),
@@ -98,7 +105,8 @@ export const exportApi = {
     api.get("/export/profit", { params, responseType: "blob" }),
   costs: () => api.get("/export/costs", { responseType: "blob" }),
 };
-// ─── Admin ───────────────────────────────────────────────────────────────────
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
 export const adminApi = {
   overview: () => api.get("/admin/overview"),
   clients: (params?: Record<string, string>) => api.get("/admin/clients", { params }),
