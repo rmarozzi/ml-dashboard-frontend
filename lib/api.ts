@@ -75,15 +75,19 @@ export const employeesApi = {
   delete: (id: number) => api.delete(`/employees/${id}`),
 };
 
-// ─── ML ──────────────────────────────────────────────────────────────────────
-export const mlApi = {
-  status: () => api.get("/ml/status"),
-  disconnect: (accountId: string) => api.delete(`/ml/disconnect/${accountId}`),
+export const channelsApi = {
+  status: () => api.get("/channels/status"),
+  disconnect: (accountId: string) => api.delete(`/channels/disconnect/${accountId}`),
 };
 
-// ─── Subscription ─────────────────────────────────────────────────────────────
-export const subscriptionApi = {
-  get: () => api.get("/subscription"),
+export const shopeeApi = {
+  connect: () => api.get("/shopee/connect"),
+};
+
+// mantém mlApi por compatibilidade com outros componentes que ainda o usam
+export const mlApi = {
+  status: () => channelsApi.status(),
+  disconnect: (accountId: string) => channelsApi.disconnect(accountId),
 };
 
 // ─── Export ──────────────────────────────────────────────────────────────────
@@ -94,7 +98,9 @@ export const exportApi = {
     api.get("/export/profit", { params, responseType: "blob" }),
   costs: () => api.get("/export/costs", { responseType: "blob" }),
 };
-
+export const shopeeApi = {
+  connect: () => api.get("/shopee/connect"),
+};
 // ─── Admin ───────────────────────────────────────────────────────────────────
 export const adminApi = {
   overview: () => api.get("/admin/overview"),

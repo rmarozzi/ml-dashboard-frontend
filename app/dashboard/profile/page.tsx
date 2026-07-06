@@ -5,7 +5,7 @@ import { Plus, Trash2, RefreshCw, AlertTriangle, CheckCircle, Percent, ChevronDo
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { authApi, mlApi, subscriptionApi, taxRateApi } from "@/lib/api";
+import { authApi, channelsApi, shopeeApi, subscriptionApi, taxRateApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
@@ -34,11 +34,13 @@ export default function ProfilePage() {
   const [taxError, setTaxError] = useState("");
 
   const canManage = !isFuncionario || can("manage_costs");
+  const mlAccounts = accounts.filter(a => a.channelType === "MERCADO_LIVRE");
+  const shopeeAccounts = accounts.filter(a => a.channelType === "SHOPEE");
 
   useEffect(() => {
-    Promise.all([mlApi.status(), subscriptionApi.get()])
-      .then(([mlRes, subRes]) => {
-        setAccounts(mlRes.data.accounts ?? []);
+    Promise.all([channelsApi.status(), subscriptionApi.get()])
+      .then(([chRes, subRes]) => {
+        setAccounts(chRes.data.accounts ?? []);
         setSubscription(subRes.data.subscription);
       })
       .catch(() => {})
@@ -57,13 +59,18 @@ export default function ProfilePage() {
   }, [hasPlan]);
 
   const handleDisconnect = async (accountId: string) => {
-    if (!confirm("Desconectar esta conta do Mercado Livre?")) return;
-    await mlApi.disconnect(accountId).catch(() => {});
+    if (!confirm("Desconectar esta conta?")) return;
+    await channelsApi.disconnect(accountId).catch(() => {});
     setAccounts((p) => p.filter((a) => a.id !== accountId));
   };
 
   const handleConnectML = async () => {
     const { data } = await authApi.mlUrl();
+    window.location.href = data.url;
+  };
+
+  const handleConnectShopee = async () => {
+    const { data } = await shopeeApi.connect();
     window.location.href = data.url;
   };
 
@@ -103,9 +110,33 @@ export default function ProfilePage() {
     } finally { setTaxSaving(false); }
   };
 
+  const AccountCard = ({ account, onReconnect }: { account: ChannelAccount; onReconnect: () => void }) => (
+    <div className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 mb-2">
+      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${account.isExpired ? "bg-red-500" : account.isExpiringSoon ? "bg-yellow-500" : "bg-brand"}`} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white">
+          {account.apelido ?? account.externalNickname ?? `Conta #${account.externalAccountId}`}
+        </p>
+        <p className="text-xs text-dim">
+          {account.isExpired ? "Token expirado" : account.isExpiringSoon ? "Expira em breve" : `Expira em ${formatDate(account.tokenExpiresAt)}`}
+          {account.externalNickname && ` · @${account.externalNickname}`}
+          {!account.initialSyncDone && " · Sincronizando..."}
+        </p>
+      </div>
+      {account.isExpired && (
+        <Button variant="secondary" size="sm" onClick={onReconnect}>
+          <RefreshCw size={12} /> Reconectar
+        </Button>
+      )}
+      <button onClick={() => handleDisconnect(account.id)} className="text-dim hover:text-red-400 transition-colors p-1">
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-5 max-w-2xl">
-      {/* Account info */}
+      {/* Dados da Conta */}
       <div className="bg-bg-3 border border-border rounded-xl p-6">
         <h2 className="font-syne text-[15px] font-bold text-white mb-5">Dados da Conta</h2>
         <div className="flex items-center gap-4 mb-5">
@@ -127,14 +158,12 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ML Accounts */}
+      {/* Contas Mercado Livre */}
       <div className="bg-bg-3 border border-border rounded-xl p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="font-syne text-[15px] font-bold text-white">Contas Mercado Livre</h2>
-            <p className="text-xs text-dim mt-0.5">
-              {accounts.length} conta(s) conectada(s)
-            </p>
+            <p className="text-xs text-dim mt-0.5">{mlAccounts.length} conta(s) conectada(s)</p>
           </div>
           <Button variant="secondary" size="sm" onClick={handleConnectML}>
             <Plus size={13} /> Conectar conta
@@ -142,33 +171,36 @@ export default function ProfilePage() {
         </div>
         {loading ? (
           <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <div key={i} className="skeleton h-16 rounded-lg" />)}</div>
-        ) : accounts.length === 0 ? (
+        ) : mlAccounts.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted text-sm mb-3">Nenhuma conta conectada</p>
             <Button variant="primary" size="sm" onClick={handleConnectML}><Plus size={13} /> Conectar Mercado Livre</Button>
           </div>
-        ) : accounts.map((a) => (
-          <div key={a.id} className="flex items-center gap-3 border border-border rounded-lg px-4 py-3 mb-2">
-            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${a.isExpired ? "bg-red-500" : a.isExpiringSoon ? "bg-yellow-500" : "bg-brand"}`} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">
-                {a.apelido ?? a.externalNickname ?? `Conta #${a.externalAccountId}`}
-              </p>
-              <p className="text-xs text-dim">
-                {a.isExpired ? "Token expirado" : a.isExpiringSoon ? "Expira em breve" : `Expira em ${formatDate(a.tokenExpiresAt)}`}
-                {a.externalNickname && ` · @${a.externalNickname}`}
-                {!a.initialSyncDone && " · Sincronizando..."}
-              </p>
-            </div>
-            {a.isExpired && (
-              <Button variant="secondary" size="sm" onClick={handleConnectML}>
-                <RefreshCw size={12} /> Reconectar
-              </Button>
-            )}
-            <button onClick={() => handleDisconnect(a.id)} className="text-dim hover:text-red-400 transition-colors p-1">
-              <Trash2 size={14} />
-            </button>
+        ) : mlAccounts.map((a) => (
+          <AccountCard key={a.id} account={a} onReconnect={handleConnectML} />
+        ))}
+      </div>
+
+      {/* Contas Shopee */}
+      <div className="bg-bg-3 border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="font-syne text-[15px] font-bold text-white">Contas Shopee</h2>
+            <p className="text-xs text-dim mt-0.5">{shopeeAccounts.length} conta(s) conectada(s)</p>
           </div>
+          <Button variant="secondary" size="sm" onClick={handleConnectShopee}>
+            <Plus size={13} /> Conectar conta
+          </Button>
+        </div>
+        {loading ? (
+          <div className="space-y-2">{Array.from({ length: 1 }).map((_, i) => <div key={i} className="skeleton h-16 rounded-lg" />)}</div>
+        ) : shopeeAccounts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted text-sm mb-3">Nenhuma conta conectada</p>
+            <Button variant="primary" size="sm" onClick={handleConnectShopee}><Plus size={13} /> Conectar Shopee</Button>
+          </div>
+        ) : shopeeAccounts.map((a) => (
+          <AccountCard key={a.id} account={a} onReconnect={handleConnectShopee} />
         ))}
       </div>
 
