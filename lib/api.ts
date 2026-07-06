@@ -98,9 +98,6 @@ export const exportApi = {
     api.get("/export/profit", { params, responseType: "blob" }),
   costs: () => api.get("/export/costs", { responseType: "blob" }),
 };
-export const shopeeApi = {
-  connect: () => api.get("/shopee/connect"),
-};
 // ─── Admin ───────────────────────────────────────────────────────────────────
 export const adminApi = {
   overview: () => api.get("/admin/overview"),
