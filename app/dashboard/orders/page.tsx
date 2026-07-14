@@ -256,7 +256,6 @@ export default function OrdersPage() {
     </td>
   </tr>
 ) : orders.map((order) => {
-                : orders.map((order) => {
                     const o = order as any;
                     const isExpanded = expanded === order.id;
                     const profitPositive = (o.profit ?? 0) >= 0;
