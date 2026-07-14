@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, RefreshCw, Bell, Clock } from "lucide-react";
+import { Menu, RefreshCw, Bell, Clock, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { dashboardApi } from "@/lib/api";
 import { timeAgo } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ interface TopbarProps {
 export function Topbar({ title, onMenuClick }: TopbarProps) {
   const { user } = useAuth();
   const { can, isFuncionario } = usePermissions();
+  const { theme, toggleTheme } = useTheme();
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
@@ -81,6 +83,15 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
           <span className="hidden sm:inline">{syncing ? "Sincronizando..." : "Sincronizar ML"}</span>
         </button>
       )}
+
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="text-muted hover:text-white transition-colors p-1.5 rounded-lg hover:bg-bg-4"
+        title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+      >
+        {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
 
       <button className="relative text-muted hover:text-white transition-colors p-1">
         <Bell size={17} />

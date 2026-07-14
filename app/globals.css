@@ -4,10 +4,39 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500;600&display=swap');
 
+/* ─── VARIÁVEIS DE TEMA ──────────────────────────────────────────── */
 :root {
   --font-syne: 'Syne', sans-serif;
   --font-dm-sans: 'DM Sans', sans-serif;
   --font-dm-mono: 'DM Mono', monospace;
+
+  /* Tema escuro (padrão) */
+  --bg-0: #07070d;
+  --bg-1: #0d0d15;
+  --bg-2: #111118;
+  --bg-3: #18181f;
+  --bg-4: #1e1e28;
+  --bg-5: #252530;
+  --border: #2a2a38;
+  --border-light: #323244;
+  --muted: #8888a8;
+  --dim: #5a5a78;
+  --text-primary: #f0f0f8;
+}
+
+/* ─── TEMA CLARO ────────────────────────────────────────────────── */
+:root.light {
+  --bg-0: #f0f2f5;
+  --bg-1: #e8eaed;
+  --bg-2: #ffffff;
+  --bg-3: #ffffff;
+  --bg-4: #f5f6f8;
+  --bg-5: #ebedf0;
+  --border: #dde0e6;
+  --border-light: #c8ccd4;
+  --muted: #444466;
+  --dim: #7777aa;
+  --text-primary: #0d0d15;
 }
 
 * {
@@ -17,37 +46,26 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #07070d;
-  color: #f0f0f8;
+  background: var(--bg-0);
+  color: var(--text-primary);
   font-family: 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #2a2a38;
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3a3a50;
-}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
 /* Badge variants */
-.badge-paid    { @apply bg-brand/10 text-brand border border-brand/30; }
-.badge-shipped { @apply bg-blue-500/10 text-blue-400 border border-blue-500/30; }
+.badge-paid      { @apply bg-brand/10 text-brand border border-brand/30; }
+.badge-shipped   { @apply bg-blue-500/10 text-blue-400 border border-blue-500/30; }
 .badge-cancelled { @apply bg-red-500/10 text-red-400 border border-red-500/30; }
-.badge-pending { @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/30; }
+.badge-pending   { @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/30; }
 
 /* Card glow on hover */
-.card-glow {
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
+.card-glow { transition: border-color 0.2s, box-shadow 0.2s; }
 .card-glow:hover {
   border-color: rgba(34, 197, 94, 0.4);
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.06);
@@ -55,11 +73,9 @@ html, body {
 
 /* Skeleton shimmer */
 .skeleton {
-  background: linear-gradient(90deg, #18181f 25%, #1e1e28 50%, #18181f 75%);
+  background: linear-gradient(90deg, var(--bg-3) 25%, var(--bg-4) 50%, var(--bg-3) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }
 
-.animate-fade-up {
-  animation: fade-up 0.35s ease both;
-}
+.animate-fade-up { animation: fade-up 0.35s ease both; }
