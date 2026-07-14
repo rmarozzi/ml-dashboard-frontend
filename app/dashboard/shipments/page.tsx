@@ -237,7 +237,7 @@ export default function ShipmentsPage() {
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Status</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Rastreio</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">
-                  <button onClick={() => handleSort("cost")} className="hover:text-white transition-colors">Custo</button>
+                  <button onClick={() => handleSort("cost")} className="hover:text-white transition-colors">Custo do Frete</button>
                 </th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">
                   <button onClick={() => handleSort("dateCreated")} className="hover:text-white transition-colors">Data</button>
