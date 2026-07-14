@@ -1,51 +1,44 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import {
-  Truck,
-  Package,
-  CheckCircle,
-  Clock,
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+  Truck, Package, CheckCircle, Clock, Search, X,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { KPICard } from "@/components/ui/KPICard";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
+import { OrderDetailPanel } from "@/components/ui/OrderDetailPanel";
 import { shipmentsApi } from "@/lib/api";
+import api from "@/lib/api";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 
 const PAGE_SIZE = 50;
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: "Aguardando etiqueta",
-  handling: "Preparando envio",
+  pending:       "Aguardando etiqueta",
+  handling:      "Preparando envio",
   ready_to_ship: "Pronto para despachar",
-  shipped: "Em trânsito",
+  shipped:       "Em trânsito",
   not_delivered: "Não entregue",
-  delivered: "Entregue",
-  cancelled: "Cancelado",
+  delivered:     "Entregue",
+  cancelled:     "Cancelado",
 };
 
 const STATUS_LIST = Object.keys(STATUS_LABELS);
 
 const STATUS_COLORS: Record<string, { text: string; bg: string; border: string }> = {
-  pending:        { text: "#eab308", bg: "rgba(234,179,8,0.1)",  border: "rgba(234,179,8,0.3)" },
-  handling:       { text: "#eab308", bg: "rgba(234,179,8,0.1)",  border: "rgba(234,179,8,0.3)" },
-  ready_to_ship:  { text: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.3)" },
-  shipped:        { text: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.3)" },
-  delivered:      { text: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.3)" },
-  not_delivered:  { text: "#ef4444", bg: "rgba(239,68,68,0.1)",  border: "rgba(239,68,68,0.3)" },
-  cancelled:      { text: "#ef4444", bg: "rgba(239,68,68,0.1)",  border: "rgba(239,68,68,0.3)" },
+  pending:       { text: "#eab308", bg: "rgba(234,179,8,0.1)",   border: "rgba(234,179,8,0.3)" },
+  handling:      { text: "#eab308", bg: "rgba(234,179,8,0.1)",   border: "rgba(234,179,8,0.3)" },
+  ready_to_ship: { text: "#3b82f6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.3)" },
+  shipped:       { text: "#3b82f6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.3)" },
+  delivered:     { text: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.3)" },
+  not_delivered: { text: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.3)" },
+  cancelled:     { text: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.3)" },
 };
 
 function ShipmentStatusBadge({ status }: { status: string }) {
-  const c = STATUS_COLORS[status] ?? { text: "#8888a8", bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.1)" };
+  const c     = STATUS_COLORS[status] ?? { text: "#8888a8", bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.1)" };
   const label = STATUS_LABELS[status] ?? status;
   return (
     <span
@@ -58,23 +51,29 @@ function ShipmentStatusBadge({ status }: { status: string }) {
 }
 
 type SortField = "dateCreated" | "status" | "cost";
-type SortDir = "asc" | "desc";
+type SortDir   = "asc" | "desc";
+
+interface OrderModal {
+  shipmentId: string;
+  order:      any | null;
+  loading:    boolean;
+}
 
 export default function ShipmentsPage() {
-  const router = useRouter();
-  const [shipments, setShipments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [costMin, setCostMin] = useState("");
-  const [costMax, setCostMax] = useState("");
-  const [sortField, setSortField] = useState<SortField>("dateCreated");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [shipments,      setShipments]      = useState<any[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [searchInput,    setSearchInput]    = useState("");
+  const [search,         setSearch]         = useState("");
+  const [statusFilter,   setStatusFilter]   = useState("");
+  const [costMin,        setCostMin]        = useState("");
+  const [costMax,        setCostMax]        = useState("");
+  const [sortField,      setSortField]      = useState<SortField>("dateCreated");
+  const [sortDir,        setSortDir]        = useState<SortDir>("desc");
+  const [currentPage,    setCurrentPage]    = useState(1);
+  const [totalPages,     setTotalPages]     = useState(1);
+  const [total,          setTotal]          = useState(0);
   const [showCostFilter, setShowCostFilter] = useState(false);
+  const [orderModal,     setOrderModal]     = useState<OrderModal | null>(null);
 
   const { can, isFuncionario } = usePermissions();
 
@@ -87,15 +86,12 @@ export default function ShipmentsPage() {
   const load = useCallback(() => {
     setLoading(true);
     const params: Record<string, string> = {
-      page: String(currentPage),
-      limit: String(PAGE_SIZE),
-      sortField,
-      sortDir,
+      page: String(currentPage), limit: String(PAGE_SIZE), sortField, sortDir,
     };
-    if (search) params.search = search;
-    if (statusFilter) params.status = statusFilter;
-    if (costMin) params.costMin = costMin;
-    if (costMax) params.costMax = costMax;
+    if (search)      params.search    = search;
+    if (statusFilter) params.status   = statusFilter;
+    if (costMin)     params.costMin   = costMin;
+    if (costMax)     params.costMax   = costMax;
 
     shipmentsApi.list(params)
       .then(({ data }) => {
@@ -119,6 +115,13 @@ export default function ShipmentsPage() {
     setCurrentPage(1);
   };
 
+  const handleOpenModal = (shipmentId: string) => {
+    setOrderModal({ shipmentId, order: null, loading: true });
+    api.get(`/orders/by-shipment/${shipmentId}`)
+      .then(({ data }) => setOrderModal({ shipmentId, order: data.order, loading: false }))
+      .catch(() => setOrderModal(null));
+  };
+
   const activeFiltersCount = (statusFilter ? 1 : 0) + (search ? 1 : 0) + (costMin || costMax ? 1 : 0);
 
   const clearFilters = () => {
@@ -126,22 +129,22 @@ export default function ShipmentsPage() {
     setCostMin(""); setCostMax(""); setCurrentPage(1);
   };
 
-  // KPIs somam só a página atual? Não — fazemos contagem geral via outra chamada seria ideal,
-  // mas para simplicidade mantemos baseado nos dados carregados na página atual.
   const counts = {
     total,
     inTransit: shipments.filter((s) => s.status === "shipped" || s.status === "ready_to_ship").length,
     delivered: shipments.filter((s) => s.status === "delivered").length,
-    pending: shipments.filter((s) => s.status === "pending" || s.status === "handling").length,
+    pending:   shipments.filter((s) => s.status === "pending"  || s.status === "handling").length,
   };
 
   return (
     <div className="flex flex-col gap-5">
+
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard label="Total de Envios" value={loading ? "—" : counts.total} icon={Package} loading={loading} />
-        <KPICard label="Em trânsito (pág.)" value={counts.inTransit} icon={Truck} color="#3b82f6" loading={loading} />
-        <KPICard label="Entregues (pág.)" value={counts.delivered} icon={CheckCircle} color="#22c55e" loading={loading} />
-        <KPICard label="Pendentes (pág.)" value={counts.pending} icon={Clock} color="#eab308" loading={loading} />
+        <KPICard label="Total de Envios"   value={loading ? "—" : counts.total}     icon={Package}     loading={loading} />
+        <KPICard label="Em trânsito (pág.)" value={counts.inTransit}                icon={Truck}       color="#3b82f6" loading={loading} />
+        <KPICard label="Entregues (pág.)"  value={counts.delivered}                 icon={CheckCircle} color="#22c55e" loading={loading} />
+        <KPICard label="Pendentes (pág.)"  value={counts.pending}                   icon={Clock}       color="#eab308" loading={loading} />
       </div>
 
       {/* Toolbar */}
@@ -185,17 +188,11 @@ export default function ShipmentsPage() {
             <div className="absolute top-10 left-0 z-50 bg-bg-4 border border-border rounded-xl shadow-xl p-3 min-w-[200px] flex flex-col gap-2">
               <p className="text-[10px] text-dim uppercase tracking-widest">Filtrar por custo (R$)</p>
               <div className="flex gap-2">
-                <input
-                  type="number"
-                  placeholder="Mín."
-                  value={costMin}
+                <input type="number" placeholder="Mín." value={costMin}
                   onChange={(e) => { setCostMin(e.target.value); setCurrentPage(1); }}
                   className="w-full bg-bg-5 border border-border rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-brand/50"
                 />
-                <input
-                  type="number"
-                  placeholder="Máx."
-                  value={costMax}
+                <input type="number" placeholder="Máx." value={costMax}
                   onChange={(e) => { setCostMax(e.target.value); setCurrentPage(1); }}
                   className="w-full bg-bg-5 border border-border rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-brand/50"
                 />
@@ -229,6 +226,7 @@ export default function ShipmentsPage() {
         )}
       </div>
 
+      {/* Tabela */}
       <div className="bg-bg-3 border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -236,9 +234,7 @@ export default function ShipmentsPage() {
               <tr className="border-b border-border bg-bg-4">
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">ID do Envio</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Conta ML</th>
-                <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">
-                  Status
-                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Status</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">Rastreio</th>
                 <th className="px-4 py-3 text-[10px] font-semibold text-dim uppercase tracking-widest">
                   <button onClick={() => handleSort("cost")} className="hover:text-white transition-colors">Custo</button>
@@ -259,18 +255,18 @@ export default function ShipmentsPage() {
                 const accountLabel = s.token?.apelido || s.token?.mlNickname || "—";
                 return (
                   <tr key={s.id} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
-<td className="px-4 py-3 font-mono text-xs">
-  {s.order?.mlId ? (
-    <button
-      onClick={() => router.push(`/dashboard/orders?search=${s.order.mlId}`)}
-      className="text-brand hover:underline transition-colors"
-    >
-      {s.mlShipmentId}
-    </button>
-  ) : (
-    <span className="text-muted">{s.mlShipmentId}</span>
-  )}
-</td>                    <td className="px-4 py-3 text-sm text-muted">{accountLabel}</td>
+                    <td className="px-4 py-3 font-mono text-xs">
+                      <button
+                        onClick={() => handleOpenModal(s.mlShipmentId)}
+                        className="text-brand hover:underline transition-colors font-mono text-xs"
+                      >
+                        {s.mlShipmentId ?? "—"}
+                      </button>
+                      {s.order?.mlId && (
+                        <p className="text-dim text-[10px] mt-0.5">Pedido: {s.order.mlId}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted">{accountLabel}</td>
                     <td className="px-4 py-3"><ShipmentStatusBadge status={s.status} /></td>
                     <td className="px-4 py-3 font-mono text-xs text-muted">{s.trackingNumber ?? "—"}</td>
                     <td className="px-4 py-3 font-mono text-sm text-white">{s.cost != null ? formatCurrency(s.cost) : "—"}</td>
@@ -298,14 +294,50 @@ export default function ShipmentsPage() {
           />
         </div>
       )}
+
+      {/* Modal de detalhes do pedido */}
+      {orderModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setOrderModal(null)}
+        >
+          <div
+            className="bg-bg-3 border border-border rounded-xl w-full max-w-xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <p className="text-sm font-bold text-white">Detalhes do Pedido</p>
+                {orderModal.order && (
+                  <p className="text-xs text-dim mt-0.5">
+                    ID: {orderModal.order.packId ?? orderModal.order.mlId}
+                  </p>
+                )}
+              </div>
+              <button onClick={() => setOrderModal(null)} className="text-dim hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            {orderModal.loading ? (
+              <div className="p-6 space-y-3">
+                {[1,2,3,4].map(i => <div key={i} className="skeleton h-8 rounded" />)}
+              </div>
+            ) : orderModal.order ? (
+              <OrderDetailPanel order={orderModal.order} />
+            ) : (
+              <div className="p-6 text-center text-muted text-sm">Pedido não encontrado</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function PaginationControls({ currentPage, totalPages, onChange }: {
   currentPage: number;
-  totalPages: number;
-  onChange: (page: number) => void;
+  totalPages:  number;
+  onChange:    (page: number) => void;
 }) {
   const pages = () => {
     const delta = 2;
