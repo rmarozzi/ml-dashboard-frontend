@@ -5,7 +5,7 @@ import { PlanProvider } from "@/contexts/PlanContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 
 export const metadata: Metadata = {
-  title: "Vendix — Vendas de todos os canais, um painel",
+  title: "Metrika — Profit Management Tool",
   description: "Gerencie pedidos, calcule lucro real e analise seu desempenho em todos os canais de venda, em um painel só.",
 };
 

@@ -2,44 +2,38 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
+  const [email,      setEmail]      = useState("");
+  const [password,   setPassword]   = useState("");
+  const [showPw,     setShowPw]     = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error,      setError]      = useState("");
 
-useEffect(() => {
-  if (!loading && user) {
-    router.replace("/dashboard");
-  }
-}, [user, loading, router]);
+  useEffect(() => {
+    if (!loading && user) router.replace("/dashboard");
+  }, [user, loading, router]);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-  if (!email || !password) { setError("Preencha e-mail e senha"); return; }
-  setSubmitting(true);
-  try {
-    const { data } = await authApi.login(email, password);
-    const role = data?.user?.role;
-    // Não chama setSubmitting(false) — deixa o spinner até o redirect
-    if (role === "admin") {
-      window.location.href = "/admin";
-    } else {
-      window.location.href = "/dashboard";
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!email || !password) { setError("Preencha e-mail e senha"); return; }
+    setSubmitting(true);
+    try {
+      const { data } = await authApi.login(email, password);
+      const role = data?.user?.role;
+      if (role === "admin") window.location.href = "/admin";
+      else                  window.location.href = "/dashboard";
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? "E-mail ou senha incorretos");
+      setSubmitting(false);
     }
-  } catch (err: any) {
-    setError(err?.response?.data?.message ?? "E-mail ou senha incorretos");
-    setSubmitting(false);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -59,23 +53,29 @@ const handleSubmit = async (e: React.FormEvent) => {
       <div className="w-full max-w-sm animate-fade-up relative">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <svg width="48" height="48" viewBox="0 0 48 48" className="mb-4">
+          <svg width="56" height="56" viewBox="0 0 40 40" className="mb-4">
             <defs>
-              <linearGradient id="vendixGradLogin" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#16a34a" />
-                <stop offset="100%" stopColor="#4ade80" />
+              <linearGradient id="metrikaGradLogin" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#1e3a5f" />
+                <stop offset="100%" stopColor="#2d6a9f" />
               </linearGradient>
             </defs>
-            <rect x="6" y="29" width="6" height="11" rx="1.5" fill="url(#vendixGradLogin)" />
-            <rect x="15" y="23" width="6" height="17" rx="1.5" fill="url(#vendixGradLogin)" />
-            <rect x="24" y="15" width="6" height="25" rx="1.5" fill="url(#vendixGradLogin)" />
-            <path d="M3 36 L36 12" stroke="url(#vendixGradLogin)" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-            <path d="M36 12 L28 15" stroke="url(#vendixGradLogin)" strokeWidth="2.6" fill="none" strokeLinecap="round" />
-            <path d="M36 12 L33 22" stroke="url(#vendixGradLogin)" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+            {/* Barras */}
+            <rect x="3"  y="26" width="6" height="10" rx="1.5" fill="url(#metrikaGradLogin)" opacity="0.5" />
+            <rect x="12" y="20" width="6" height="16" rx="1.5" fill="url(#metrikaGradLogin)" opacity="0.75" />
+            <rect x="21" y="13" width="6" height="23" rx="1.5" fill="url(#metrikaGradLogin)" />
+            {/* Seta */}
+            <path d="M4 28 L30 8" stroke="url(#metrikaGradLogin)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M30 8 L24 10" stroke="url(#metrikaGradLogin)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M30 8 L28 16" stroke="url(#metrikaGradLogin)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            {/* % badge */}
+            <rect x="29" y="1" width="11" height="11" rx="2.5" fill="url(#metrikaGradLogin)" />
+            <text x="34.5" y="9.5" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white">%</text>
           </svg>
-          <h1 className="font-syne text-2xl font-extrabold text-white">Vendix</h1>
-          <p className="text-muted text-sm mt-1">Vendas de todos os canais, um painel</p>
+          <h1 className="font-syne text-2xl font-extrabold text-white">Metrika</h1>
+          <p className="text-muted text-sm mt-1">Profit Management Tool</p>
         </div>
+
         {/* Card */}
         <div className="bg-bg-3 border border-border rounded-2xl p-8">
           <h2 className="font-syne text-lg font-bold text-white mb-6">Entrar na sua conta</h2>
