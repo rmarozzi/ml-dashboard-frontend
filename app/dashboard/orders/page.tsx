@@ -246,14 +246,16 @@ export default function OrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {loading
-                ? Array.from({ length: 10 }).map((_, i) => (
-                    <tr key={i} className="border-b border-border/20">
-                      {Array.from({ length: 11 }).map((_, j) => (
-                        <td key={j} className="px-4 py-3"><div className="skeleton h-4 rounded" /></td>
-                      ))}
-                    </tr>
-                  ))
+              {loading ? (
+  <tr>
+    <td colSpan={11} className="py-20">
+      <div className="flex flex-col items-center justify-center gap-3">
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-dim">Carregando pedidos...</p>
+      </div>
+    </td>
+  </tr>
+) : orders.map((order) => {
                 : orders.map((order) => {
                     const o = order as any;
                     const isExpanded = expanded === order.id;
