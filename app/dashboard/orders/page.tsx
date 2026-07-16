@@ -269,11 +269,11 @@ export default function OrdersPage() {
                       <>
                         <tr
                           key={order.id}
-                          className={`border-b border-border/10 transition-colors cursor-pointer ${
+                          className={`border-b border-[rgba(255,255,255,0.06)] transition-colors cursor-pointer ${
   hasMissingCost
     ? "bg-yellow-500/[0.03] hover:bg-yellow-500/[0.07]"
     : "hover:bg-bg-4"
-                          }`}
+}`}
                           onClick={() => setExpanded(isExpanded ? null : order.id)}
                         >
                           <td className="px-4 py-3 font-mono text-xs text-muted whitespace-nowrap">

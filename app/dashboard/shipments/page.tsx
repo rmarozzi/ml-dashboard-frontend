@@ -246,7 +246,7 @@ export default function ShipmentsPage() {
             </thead>
             <tbody>
               {loading ? Array.from({ length: 10 }).map((_, i) => (
-                <tr key={i} className="border-b border-border/20">
+				<tr key={i} className="border-b border-[rgba(255,255,255,0.06)]">
                   {Array.from({ length: 6 }).map((_, j) => (
                     <td key={j} className="px-4 py-3"><div className="skeleton h-4 rounded" /></td>
                   ))}
@@ -254,7 +254,7 @@ export default function ShipmentsPage() {
               )) : shipments.map((s) => {
                 const accountLabel = s.token?.apelido || s.token?.mlNickname || "—";
                 return (
-                  <tr key={s.id} className="border-b border-border/10 hover:bg-bg-4 transition-colors">
+                  <tr key={s.id} className="border-b border-[rgba(255,255,255,0.06)] hover:bg-bg-4 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs">
                       <button
                         onClick={() => handleOpenModal(s.mlShipmentId)}
