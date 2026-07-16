@@ -254,7 +254,7 @@ export default function ShipmentsPage() {
               )) : shipments.map((s) => {
                 const accountLabel = s.token?.apelido || s.token?.mlNickname || "—";
                 return (
-                  <tr key={s.id} className="border-b border-border/20 hover:bg-bg-4 transition-colors">
+                  <tr key={s.id} className="border-b border-border/10 hover:bg-bg-4 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs">
                       <button
                         onClick={() => handleOpenModal(s.mlShipmentId)}

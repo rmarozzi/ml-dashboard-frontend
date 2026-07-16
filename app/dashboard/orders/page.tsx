@@ -269,10 +269,10 @@ export default function OrdersPage() {
                       <>
                         <tr
                           key={order.id}
-                          className={`border-b transition-colors cursor-pointer ${
-                            hasMissingCost
-                              ? "border-b-yellow-500/20 bg-yellow-500/[0.03] hover:bg-yellow-500/[0.07]"
-                              : "border-border/20 hover:bg-bg-4"
+                          className={`border-b border-border/10 transition-colors cursor-pointer ${
+  hasMissingCost
+    ? "bg-yellow-500/[0.03] hover:bg-yellow-500/[0.07]"
+    : "hover:bg-bg-4"
                           }`}
                           onClick={() => setExpanded(isExpanded ? null : order.id)}
                         >
