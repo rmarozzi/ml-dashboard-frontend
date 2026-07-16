@@ -28,7 +28,6 @@ const config: Config = {
         },
         muted: "var(--muted)",
         dim: "var(--dim)",
-        white: "var(--text-primary)",
       },
       fontFamily: {
         syne: ["var(--font-syne)", "sans-serif"],
